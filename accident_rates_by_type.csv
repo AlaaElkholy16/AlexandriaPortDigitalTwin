@@ -1,0 +1,6 @@
+vessel_type,port_calls,accidents,rate_per_1000_calls
+dry_bulk,1023,4,3.91
+general_cargo,1513,4,2.64
+container,1707,4,2.34
+tanker,517,1,1.93
+roro,217,0,0.0

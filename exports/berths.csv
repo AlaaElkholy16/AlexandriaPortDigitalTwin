@@ -1,0 +1,57 @@
+berth_id,quay_no,name,terminal,type,shipnext_class,length_m,draft_m,operator,port,center_lat,center_lon,coords_status
+B49,49,Berth No 49,ALEXANDRIA HANDLINGCARGOES AND CONTAINERSTERMINAL,container,B-Dry,177.0,14.0,APMT,Alexandria,31.188182,29.876041,shipnext_authoritative
+B51,51,Berth No 51,ALEXANDRIA HANDLINGCARGOES AND CONTAINERSTERMINAL,container,B-Dry,177.0,14.0,APMT,Alexandria,31.188915,29.874962,shipnext_authoritative
+B53,53,Berth No 53,ALEXANDRIA HANDLINGCARGOES AND CONTAINERSTERMINAL,container,B-Dry,176.0,14.0,APMT,Alexandria,31.189612,29.873937,shipnext_authoritative
+B54,54,Berth No 54,ALEXANDRIA HANDLINGCARGOES AND CONTAINERSTERMINAL,container,B-Dry,160.0,14.0,APMT,Alexandria,31.190379,29.872807,shipnext_authoritative
+B71,71,Berth No 71,ALEXANDRIA INTERNATIONAL CONTAINER TERMINAL,container,B-Dry,280.0,9.0,HBH,Alexandria,31.170706,29.863082,shipnext_authoritative
+B72,72,Berth No 72,ALEXANDRIA INTERNATIONAL CONTAINER TERMINAL,container,B-Dry,380.0,12.0,HBH,Alexandria,31.170454,29.860855,shipnext_authoritative
+B73,73,Berth No 73,ALEXANDRIA INTERNATIONAL CONTAINER TERMINAL,container,B-Dry,280.0,12.0,HBH,Alexandria,31.16908,29.859717,shipnext_authoritative
+BALEXANDRIA OFFSHORE BERTH,ALEXANDRIA OFFSHORE BERTH,Alexandria Offshore Berth,ALEXANDRIA OFFSHORE,general_cargo,B-Wet,,,,Alexandria,31.184454,29.866501,shipnext_authoritative
+B61,61,Berth No 61,COAL TERMINAL,general_cargo,B-Dry,294.0,17.5,under_development,Alexandria,31.186055,29.8729,shipnext_authoritative
+B62,62,Berth No 62,COAL TERMINAL,general_cargo,B-Dry,292.0,17.5,under_development,Alexandria,31.185238,29.873874,shipnext_authoritative
+B63,63,Berth No 63,COAL TERMINAL,coal,B-Dry,150.0,10.0,,Alexandria,31.18451,29.874745,shipnext_authoritative
+B64,64,Berth No 64,COAL TERMINAL,coal,B-Dry,150.0,10.0,,Alexandria,31.18372,29.875689,shipnext_authoritative
+B87_1,87/1,Berth No. 87/1,E.G.P.C.,petroleum,B-Wet,178.0,10.0,,Alexandria,31.164938,29.852026,shipnext_authoritative
+B65,65,Berth No 65,FERTILIZERS TERMINAL,general_cargo_bulk,B-Dry,161.0,10.0,,Alexandria,31.182781,29.876413,shipnext_authoritative
+B66,66,Berth No 66,FERTILIZERS TERMINAL,general_cargo_bulk,B-Dry,161.0,11.0,,Alexandria,31.181729,29.875423,shipnext_authoritative
+B67,67,Berth No 67,FERTILIZERS TERMINAL,general_cargo_bulk,B-Dry,161.0,11.0,,Alexandria,31.180625,29.874383,shipnext_authoritative
+B68,68,Berth No 68,FERTILIZERS TERMINAL,general_cargo_bulk,B-Dry,162.0,12.0,,Alexandria,31.179343,29.873176,shipnext_authoritative
+B1_5,1/5,Berth No.5/1,FIRST ZONE TERMINAL,general_cargo,B-Dry,103.0,6.5,,Alexandria,31.198342,29.881146,shipnext_authoritative
+B10,10,Berth No.10,FIRST ZONE TERMINAL,general_cargo,B-Dry,135.0,8.0,,Alexandria,31.196956,29.880062,shipnext_authoritative
+B11,11,Berth No.11,FIRST ZONE TERMINAL,general_cargo,B-Dry,127.0,9.0,,Alexandria,31.196663,29.879322,shipnext_authoritative
+B12,12,Berth No.12,FIRST ZONE TERMINAL,general_cargo,B-Dry,100.0,9.0,,Alexandria,31.196541,29.878185,shipnext_authoritative
+B13,13,Berth No.13,FIRST ZONE TERMINAL,general_cargo,B-Dry,144.0,9.0,,Alexandria,31.195547,29.87865,shipnext_authoritative
+B14,14,Berth No.14,FIRST ZONE TERMINAL,general_cargo,B-Dry,183.0,10.0,,Alexandria,31.194672,29.878614,shipnext_authoritative
+B2_5,2/5,Berth No.5/2,FIRST ZONE TERMINAL,general_cargo,B-Dry,104.0,6.5,,Alexandria,31.197656,29.881594,shipnext_authoritative
+B3_5,3/5,Berth No.5/3,FIRST ZONE TERMINAL,general_cargo,B-Dry,103.0,6.5,,Alexandria,31.197041,29.881995,shipnext_authoritative
+B4_5,4/5,Berth No.5/4,FIRST ZONE TERMINAL,general_cargo,B-Dry,100.0,6.5,,Alexandria,31.196404,29.882413,shipnext_authoritative
+B9,9,Berth No.9,FIRST ZONE TERMINAL,general_cargo,B-Dry,70.0,6.5,,Alexandria,31.197155,29.880866,shipnext_authoritative
+B82,82,Berth No.82,GRAIN TERMINAL,general_cargo,B-Dry,190.0,10.0,,Alexandria,31.167027,29.860185,shipnext_authoritative
+B84,84,Berth No.84,GRAIN TERMINAL,grains,B-Dry,160.0,10.0,,Alexandria,31.165742,29.858071,shipnext_authoritative
+B85,85,Berth No.85,GRAIN TERMINAL,grain_timber,B-Dry,250.0,13.0,,Alexandria,31.166395,29.856898,shipnext_authoritative
+B85_1,85/1,Berth No.85/1,GRAIN TERMINAL,grains,B-Dry,360.0,13.0,,Alexandria,31.168618,29.857343,shipnext_authoritative
+B86,86,Berth No.86,LIVESTOCK TERMINAL,livestock,B-Dry,133.0,7.0,,Alexandria,31.162312,29.853915,shipnext_authoritative
+B46,46,Berth No 46,MILITARY TERMINAL,military,B-Dry,204.0,10.0,,Alexandria,31.185204,29.877709,shipnext_authoritative
+B47,47,Berth No 47,MILITARY TERMINAL,military,B-Dry,203.0,10.0,,Alexandria,31.186722,29.87749,shipnext_authoritative
+B87_3,87/3,Berth No. 87/3,PETRO BASIN TERMINAL (E.G.P.C),petroleum,B-Wet,80.0,12.0,,Alexandria,31.163703,29.854603,shipnext_authoritative
+B87_4,87/4,Berth No. 87/4,PETRO BASIN TERMINAL (E.G.P.C),petroleum,B-Wet,80.0,12.0,,Alexandria,31.164038,29.855256,shipnext_authoritative
+B87_5,87/5,Berth No. 87/5,PETRO BASIN TERMINAL (E.G.P.C),petroleum,B-Wet,350.0,12.0,,Alexandria,31.165554,29.855948,shipnext_authoritative
+B16,16,Berth 16,SECOND ZONE - CRUISE TERMINAL,passenger,B-Dry,160.0,12.0,,Alexandria,31.193961,29.877162,shipnext_authoritative
+B18,18,Berth 18,SECOND ZONE - CRUISE TERMINAL,passenger,B-Dry,160.0,12.0,,Alexandria,31.193097,29.876095,shipnext_authoritative
+B20,20,Berth 20,SECOND ZONE - CRUISE TERMINAL,passenger,B-Dry,160.0,12.0,,Alexandria,31.192626,29.877503,shipnext_authoritative
+B22,22,Berth 22,SECOND ZONE - CRUISE TERMINAL,passenger,B-Dry,160.0,12.0,,Alexandria,31.192928,29.879334,shipnext_authoritative
+B24,24,Berth 24,SECOND ZONE - CRUISE TERMINAL,passenger,B-Dry,158.0,12.0,,Alexandria,31.193195,29.880935,shipnext_authoritative
+B25,25,Berth No 25,SECOND ZONE - GENERAL CARGO TERMINAL,roro_general,B-Dry,165.0,10.0,,Alexandria,31.192067,29.881483,shipnext_authoritative
+B26,26,Berth No 26,SECOND ZONE - GENERAL CARGO TERMINAL,roro_general,B-Dry,165.0,10.0,,Alexandria,31.191063,29.881564,shipnext_authoritative
+B27,27,Berth No 27,SECOND ZONE - GENERAL CARGO TERMINAL,roro,B-Dry,150.0,12.0,,Alexandria,31.190087,29.881312,shipnext_authoritative
+B28,28,Berth No 28,SECOND ZONE - GENERAL CARGO TERMINAL,roro,B-Dry,150.0,12.0,,Alexandria,31.189295,29.880682,shipnext_authoritative
+B35,35,Berth No 35,THIRD ZONE - GENERAL CARGO TERMINAL,general_cargo,B-Dry,114.0,10.0,,Alexandria,31.188876,29.879704,shipnext_authoritative
+B36,36,Berth No 36,THIRD ZONE - GENERAL CARGO TERMINAL,general_cargo,B-Dry,114.0,10.0,,Alexandria,31.189668,29.878971,shipnext_authoritative
+B37,37,Berth No 37,THIRD ZONE - GENERAL CARGO TERMINAL,general_cargo,B-Dry,113.0,10.0,,Alexandria,31.19032,29.878367,shipnext_authoritative
+B38,38,Berth No 38,THIRD ZONE - GENERAL CARGO TERMINAL,general_cargo,B-Dry,114.0,10.0,,Alexandria,31.190361,29.877219,shipnext_authoritative
+B39,39,Berth No 39,THIRD ZONE - GENERAL CARGO TERMINAL,roro,B-Dry,155.0,10.0,,Alexandria,31.189179,29.877249,shipnext_authoritative
+B40,40,Berth No 40,THIRD ZONE - GENERAL CARGO TERMINAL,roro,B-Dry,155.0,10.0,,Alexandria,31.188171,29.878191,shipnext_authoritative
+B41,41,Berth No 41,THIRD ZONE - GENERAL CARGO TERMINAL,general_cargo,B-Dry,175.0,10.0,,Alexandria,31.187021,29.878977,shipnext_authoritative
+B42,42,Berth No 42,THIRD ZONE - GENERAL CARGO TERMINAL,general_cargo,B-Dry,115.0,7.5,,Alexandria,31.185901,29.879606,shipnext_authoritative
+B43,43,Berth No 43,THIRD ZONE - GENERAL CARGO TERMINAL,general_cargo,B-Dry,115.0,7.5,,Alexandria,31.184883,29.879686,shipnext_authoritative
+B44,44,Berth No 44,THIRD ZONE - GENERAL CARGO TERMINAL,general_cargo,B-Dry,154.0,6.5,,Alexandria,31.183972,29.878821,shipnext_authoritative

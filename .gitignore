@@ -1,0 +1,45 @@
+# ── Secrets ──────────────────────────────────────────────
+Cesium_acces-token.txt
+*apikey*.txt
+.env
+.env.*
+
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ── Large binary data (committed JSON/CSV is fine) ───────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── IDE / OS ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Generated plots / logs ───────────────────────────────
+plots/
+*.log
+
+# ── Reference images from other ports (too large) ────────
+Qingdao.jpeg
+singapore-port-solution.jpeg
+3d-port-google-tiles.jpeg
+unity-example-design.jpg
+alex-port-googleearth.jpg
+alex-port-dt-blender-result.jpg
+port-stallite-view5.jpg
+port-view.jpg
+berth-view2.jpg
+Berth-view3.jpg
+berth-view4.jpg
+berth-view-6.jpg

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alexandria Port DT — Pipeline Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0e17; --bg2: #121a29; --text: #e0e8f0; --muted: #8b9dc3;
+    --blue: #00d4ff; --green: #00ff9d; --yellow: #ffa726; --red: #ef5350;
+    --purple: #ab47bc; --pink: #ff4081; --teal: #4db6ac; --orange: #ff7043;
+  }
+  html, body { font-family: 'Inter', sans-serif; color: var(--text);
+    background: linear-gradient(135deg, #0a0e17 0%, #121a29 50%, #0a0e17 100%);
+    min-height: 100vh; padding: 30px; overflow-x: auto; }
+  header { text-align: center; margin-bottom: 40px; }
+  header h1 { font-size: 28px; font-weight: 800; letter-spacing: 3px;
+    background: linear-gradient(90deg, var(--blue), var(--purple), var(--pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 6px; }
+  header p { font-size: 12px; color: var(--muted); letter-spacing: 3px; text-transform: uppercase; }
+  header .sub { font-size: 11px; color: var(--muted); margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+
+  .pipeline { max-width: 1700px; margin: 0 auto; display: flex;
+    flex-direction: column; gap: 22px; }
+
+  .layer { position: relative; background: rgba(18, 26, 41, 0.75);
+    border-radius: 18px; padding: 22px 24px; border: 1px solid rgba(0, 212, 255, 0.15);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03); }
+  .layer::before { content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 5px;
+    border-radius: 18px 0 0 18px; }
+  .layer.ingestion::before  { background: linear-gradient(180deg, var(--blue), #0055cc); }
+  .layer.storage::before    { background: linear-gradient(180deg, var(--teal), #00695c); }
+  .layer.processing::before { background: linear-gradient(180deg, var(--purple), #6a1b9a); }
+  .layer.ml::before         { background: linear-gradient(180deg, var(--yellow), #e65100); }
+  .layer.optimization::before{ background: linear-gradient(180deg, var(--orange), #bf360c); }
+  .layer.api::before        { background: linear-gradient(180deg, var(--green), #1b5e20); }
+  .layer.ui::before         { background: linear-gradient(180deg, var(--pink), #880e4f); }
+
+  .layer-head { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+  .layer-badge { font-size: 11px; font-weight: 800; letter-spacing: 3px;
+    padding: 5px 14px; border-radius: 18px; text-transform: uppercase; }
+  .ingestion .layer-badge  { background: rgba(0,212,255,0.18); color: var(--blue);   border: 1px solid rgba(0,212,255,0.45); }
+  .storage .layer-badge    { background: rgba(77,182,172,0.18); color: var(--teal);  border: 1px solid rgba(77,182,172,0.45); }
+  .processing .layer-badge { background: rgba(171,71,188,0.18); color: var(--purple);border: 1px solid rgba(171,71,188,0.45); }
+  .ml .layer-badge         { background: rgba(255,167,38,0.18); color: var(--yellow);border: 1px solid rgba(255,167,38,0.45); }
+  .optimization .layer-badge{ background: rgba(255,112,67,0.18);color: var(--orange);border: 1px solid rgba(255,112,67,0.45); }
+  .api .layer-badge        { background: rgba(0,255,157,0.18); color: var(--green); border: 1px solid rgba(0,255,157,0.45); }
+  .ui .layer-badge         { background: rgba(255,64,129,0.18); color: var(--pink);  border: 1px solid rgba(255,64,129,0.45); }
+  .layer-title { font-size: 20px; font-weight: 700; }
+  .layer-desc { font-size: 12px; color: var(--muted); margin-left: auto; max-width: 450px; text-align: right; }
+
+  .components { display: flex; flex-wrap: wrap; gap: 14px; }
+  .component { background: rgba(10, 14, 23, 0.75); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 14px 16px; min-width: 200px; flex: 1 1 200px;
+    transition: transform 0.15s, border-color 0.15s; }
+  .component:hover { transform: translateY(-3px); border-color: rgba(0,212,255,0.4); }
+  .component .tag { font-size: 9px; letter-spacing: 2px; color: var(--muted);
+    font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+  .component h3 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 5px;
+    display: flex; align-items: center; gap: 7px; }
+  .component .icon { font-size: 18px; }
+  .component p { font-size: 11px; color: var(--muted); line-height: 1.55; }
+  .component .meta { font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--blue); margin-top: 8px; padding-top: 8px;
+    border-top: 1px dashed rgba(255,255,255,0.08); }
+  .component.novel { border: 1px solid rgba(255,167,38,0.5);
+    box-shadow: 0 0 18px rgba(255,167,38,0.18); }
+  .component.novel::after { content: '★ NOVEL'; position: absolute; top: -9px; right: 8px;
+    background: var(--yellow); color: #0a0e17; font-size: 8px; font-weight: 800;
+    letter-spacing: 1.5px; padding: 2px 8px; border-radius: 6px; }
+  .component { position: relative; }
+
+  /* Flow arrow between layers */
+  .flow-arrow { display: flex; justify-content: center; margin: -6px 0; }
+  .flow-arrow svg { filter: drop-shadow(0 0 8px rgba(0,212,255,0.3)); }
+
+  .meta-row { display: flex; gap: 14px; justify-content: center; margin-top: 32px;
+    padding-top: 24px; border-top: 1px dashed rgba(0,212,255,0.15); flex-wrap: wrap; }
+  .meta-card { background: rgba(10,14,23,0.8); border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 10px; padding: 10px 16px; min-width: 140px; text-align: center; }
+  .meta-card .v { font-size: 18px; font-weight: 700; color: var(--blue);
+    font-family: 'JetBrains Mono', monospace; }
+  .meta-card .l { font-size: 9px; color: var(--muted); letter-spacing: 2px;
+    text-transform: uppercase; margin-top: 3px; }
+
+  .legend { margin-top: 24px; display: flex; gap: 22px; justify-content: center; flex-wrap: wrap;
+    font-size: 11px; color: var(--muted); }
+  .legend-item { display: flex; align-items: center; gap: 7px; }
+  .legend-dot { width: 11px; height: 11px; border-radius: 3px; }
+
+  .footer { text-align: center; margin-top: 24px; font-size: 10px; color: var(--muted);
+    letter-spacing: 2px; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ALEXANDRIA PORT DIGITAL TWIN</h1>
+  <p>End-to-End Data Pipeline · Graduation Project 2026</p>
+  <div class="sub">REAL-DATA LOADING/UNLOADING OPTIMIZATION · Alaa · CS/IT</div>
+</header>
+
+<div class="pipeline">
+
+  <!-- ── LAYER 1: DATA SOURCES ─────────────────────────────────────── -->
+  <div class="layer ingestion">
+    <div class="layer-head">
+      <span class="layer-badge">① Data Sources</span>
+      <span class="layer-title">External feeds · all public, no paid API</span>
+      <span class="layer-desc">Poll continuously or fetch on-demand. Real data only — no synthetic, no Kafka required at this throughput.</span>
+    </div>
+    <div class="components">
+      <div class="component">
+        <div class="tag">REST · HTTP</div>
+        <h3><span class="icon">🚢</span>ShipNext Public API</h3>
+        <p>Live fleet, berth polygons, planned arrivals, cargo manifests</p>
+        <div class="meta">/api/v1/ports/public/alexandria-egaly-egy<br>+ 3 more endpoints · 5-min poll</div>
+      </div>
+      <div class="component">
+        <div class="tag">REST · NO KEY</div>
+        <h3><span class="icon">🌊</span>Open-Meteo Marine</h3>
+        <p>Wind, wave height/period, currents, temp, visibility</p>
+        <div class="meta">api.open-meteo.com/v1/marine<br>hourly forecast + ERA5 archive</div>
+      </div>
+      <div class="component">
+        <div class="tag">ArcGIS FeatureServer</div>
+        <h3><span class="icon">📊</span>IMF PortWatch</h3>
+        <p>Daily per-port aggregate calls + trade volumes</p>
+        <div class="meta">port23 (Alex) · port2044 (Dekheila)<br>930 rows since 2025-01</div>
+      </div>
+      <div class="component">
+        <div class="tag">PDF · STATIC</div>
+        <h3><span class="icon">📄</span>APA Operations Manual</h3>
+        <p>Berth length, draft, cargo type (authoritative)</p>
+        <div class="meta">Operating-Instructions.pdf<br>75 quays documented</div>
+      </div>
+      <div class="component">
+        <div class="tag">FUTURE (Week 5)</div>
+        <h3><span class="icon">⚠</span>Equasis + EMSA</h3>
+        <p>Per-vessel casualty history for accident model</p>
+        <div class="meta">equasis.org · Bye-Almklov 2019</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow"><svg width="26" height="32" viewBox="0 0 26 32"><path d="M13 0 L13 24 M4 18 L13 28 L22 18" stroke="#00d4ff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- ── LAYER 2: INGESTION ───────────────────────────────────────── -->
+  <div class="layer ingestion">
+    <div class="layer-head">
+      <span class="layer-badge">② Ingestion</span>
+      <span class="layer-title">Python workers · APScheduler</span>
+      <span class="layer-desc">0.4 events/sec — <b>Kafka is 10⁴× overkill</b>. Simple cron polling + async fetch + SQLite append is correct for this scale.</span>
+    </div>
+    <div class="components">
+      <div class="component">
+        <div class="tag">PYTHON · 5-min poll</div>
+        <h3><span class="icon">🛰</span>shipnext_ingest.py</h3>
+        <p>Fetches 4 endpoints, spatial-joins vessels → berths, classifies AT_BERTH / AT_ANCHORAGE / MOORED</p>
+        <div class="meta">Shapely 2.x · point-in-polygon + 100m buffer</div>
+      </div>
+      <div class="component">
+        <div class="tag">PYTHON · hourly</div>
+        <h3><span class="icon">☁</span>weather_ingest.py</h3>
+        <p>Open-Meteo Marine → weather_hourly table</p>
+        <div class="meta">urllib · 24 rows/day</div>
+      </div>
+      <div class="component">
+        <div class="tag">PYTHON · nightly</div>
+        <h3><span class="icon">📈</span>portwatch_ingest.py</h3>
+        <p>ArcGIS FeatureServer incremental sync</p>
+        <div class="meta">SQLite upsert · 30-day rolling</div>
+      </div>
+      <div class="component">
+        <div class="tag">STANDARD LIB</div>
+        <h3><span class="icon">⏱</span>APScheduler</h3>
+        <p>Cron jobs, retries with exp backoff</p>
+        <div class="meta">apscheduler 3.10 · in-process</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow"><svg width="26" height="32" viewBox="0 0 26 32"><path d="M13 0 L13 24 M4 18 L13 28 L22 18" stroke="#4db6ac" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- ── LAYER 3: STORAGE ─────────────────────────────────────────── -->
+  <div class="layer storage">
+    <div class="layer-head">
+      <span class="layer-badge">③ Storage</span>
+      <span class="layer-title">SQLite (dev) → PostgreSQL + PostGIS + TimescaleDB (prod)</span>
+      <span class="layer-desc">One engine for relational + spatial + time-series. PostGIS indexes berth polygons, TimescaleDB hypertable for vessel positions.</span>
+    </div>
+    <div class="components">
+      <div class="component">
+        <div class="tag">HYPERTABLE · 7-day chunks</div>
+        <h3><span class="icon">📍</span>vessel_positions</h3>
+        <p>Every polled position, indexed on (imo, ts). Continuous aggregate for 1h rollups.</p>
+        <div class="meta">~1,500 rows/hour · years of history</div>
+      </div>
+      <div class="component">
+        <div class="tag">POSTGIS · SPATIAL</div>
+        <h3><span class="icon">⚓</span>berths</h3>
+        <p>56 polygons with GiST index · quay_no, terminal, length_m, draft_m</p>
+        <div class="meta">ST_Contains / ST_DWithin joins</div>
+      </div>
+      <div class="component">
+        <div class="tag">DERIVED · UPSERT</div>
+        <h3><span class="icon">⏳</span>berth_occupancy_intervals</h3>
+        <p>first_seen → last_seen per (berth, imo) · dwell_hours</p>
+        <div class="meta">Training labels (Pillar 1)</div>
+      </div>
+      <div class="component">
+        <div class="tag">RELATIONAL</div>
+        <h3><span class="icon">📦</span>cargo_manifests, vessels, weather_hourly, accidents, planned_arrivals, kpi_snapshots</h3>
+        <p>Full DCSA-aligned schema (see PROJECT_PLAN_v3.md)</p>
+        <div class="meta">15 tables total · 3NF + JSONB for flex fields</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow"><svg width="26" height="32" viewBox="0 0 26 32"><path d="M13 0 L13 24 M4 18 L13 28 L22 18" stroke="#ab47bc" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- ── LAYER 4: FEATURE ENGINEERING ─────────────────────────────── -->
+  <div class="layer processing">
+    <div class="layer-head">
+      <span class="layer-badge">④ Feature Engineering</span>
+      <span class="layer-title">Pandas / Polars · on-demand</span>
+      <span class="layer-desc">Turn raw tables into (features, label) training rows. Runs nightly or on model-retrain trigger.</span>
+    </div>
+    <div class="components">
+      <div class="component">
+        <div class="tag">SQL → DataFrame</div>
+        <h3><span class="icon">🏷</span>label_extractor.py</h3>
+        <p>Joins berth_occupancy with vessel details + weather at arrival → training label (dwell_hours)</p>
+        <div class="meta">~400 rows/month once polling is running</div>
+      </div>
+      <div class="component">
+        <div class="tag">PANDAS</div>
+        <h3><span class="icon">🧮</span>features_builder.py</h3>
+        <p>40+ features: DWT, LOA, laden/ballast, berth specs, weather, hour-of-day, rolling berth averages</p>
+        <div class="meta">documented in PROJECT_PLAN_v3.md §B-6</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow"><svg width="26" height="32" viewBox="0 0 26 32"><path d="M13 0 L13 24 M4 18 L13 28 L22 18" stroke="#ffa726" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- ── LAYER 5: MACHINE LEARNING ────────────────────────────────── -->
+  <div class="layer ml">
+    <div class="layer-head">
+      <span class="layer-badge">⑤ ML Layer — Pillar 1</span>
+      <span class="layer-title">Handling-time predictor</span>
+      <span class="layer-desc">Predicts dwell hours per (vessel, berth, weather, loading status). Re-trained weekly, served via joblib pickle.</span>
+    </div>
+    <div class="components">
+      <div class="component novel">
+        <div class="tag">LIGHTGBM · TWEEDIE</div>
+        <h3><span class="icon">🤖</span>handling_time_model.pkl</h3>
+        <p>Regressor with zero-inflated tail handling. Input: 40 features → Output: p10/p50/p90 dwell hours</p>
+        <div class="meta">Novel feature: loading_status × berth_type</div>
+      </div>
+      <div class="component">
+        <div class="tag">OPTUNA · 50 trials</div>
+        <h3><span class="icon">🎯</span>hyperparameter_search.py</h3>
+        <p>Rolling-origin CV, minimise MAE</p>
+        <div class="meta">Target MAE: beat mean-predictor by ≥30%</div>
+      </div>
+      <div class="component">
+        <div class="tag">MLFLOW · OPTIONAL</div>
+        <h3><span class="icon">📝</span>Experiment tracking</h3>
+        <p>Log every training run — hyperparams, metrics, feature importance</p>
+        <div class="meta">Local file backend · no server needed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow"><svg width="26" height="32" viewBox="0 0 26 32"><path d="M13 0 L13 24 M4 18 L13 28 L22 18" stroke="#ff7043" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- ── LAYER 6: OPTIMIZATION ────────────────────────────────────── -->
+  <div class="layer optimization">
+    <div class="layer-head">
+      <span class="layer-badge">⑥ Optimization — Pillars 2 & 3</span>
+      <span class="layer-title">OR-Tools CP-SAT · Heterogeneous BAP</span>
+      <span class="layer-desc">Takes predicted dwell times + ETAs + cargo-readiness dates. Outputs recommended schedule every 15 min.</span>
+    </div>
+    <div class="components">
+      <div class="component novel">
+        <div class="tag">OR-TOOLS 9.11</div>
+        <h3><span class="icon">🧩</span>bap_solver.py</h3>
+        <p>CP-SAT with NoOverlap2D, Cumulative (cranes), per-terminal compatibility, draft/length fit</p>
+        <div class="meta">Novel: 5-terminal-type constraints for Alexandria</div>
+      </div>
+      <div class="component novel">
+        <div class="tag">NOVEL CONSTRAINT</div>
+        <h3><span class="icon">📅</span>cargo_readiness_constraint.py</h3>
+        <p>Loading ship start_time ≥ max(ETA, readinessDate of matched cargo)</p>
+        <div class="meta">Pillar 3 — not in any published BAP paper</div>
+      </div>
+      <div class="component">
+        <div class="tag">SIMPY 4.1</div>
+        <h3><span class="icon">🎲</span>replay_simulator.py</h3>
+        <p>Replays 30 days of real ShipNext observations for validation</p>
+        <div class="meta">Target: ≥10% turnaround improvement</div>
+      </div>
+      <div class="component">
+        <div class="tag">BENCHMARK</div>
+        <h3><span class="icon">📏</span>meisel_2009_validator.py</h3>
+        <p>Reproduces published optima on 300 Meisel-Bierwirth instances</p>
+        <div class="meta">Target gap ≤5% within 300s</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow"><svg width="26" height="32" viewBox="0 0 26 32"><path d="M13 0 L13 24 M4 18 L13 28 L22 18" stroke="#00ff9d" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- ── LAYER 7: API ─────────────────────────────────────────────── -->
+  <div class="layer api">
+    <div class="layer-head">
+      <span class="layer-badge">⑦ API Layer</span>
+      <span class="layer-title">FastAPI + Uvicorn</span>
+      <span class="layer-desc">REST endpoints for dashboard + future APA integration. No MLflow serving — one model pickle is enough.</span>
+    </div>
+    <div class="components">
+      <div class="component">
+        <div class="tag">FASTAPI 0.115</div>
+        <h3><span class="icon">🚀</span>api/main.py</h3>
+        <p>/live, /berths, /occupancy, /plan, /predict-dwell, /recommend-berth</p>
+        <div class="meta">async · OpenAPI docs at /docs</div>
+      </div>
+      <div class="component">
+        <div class="tag">WEBSOCKET</div>
+        <h3><span class="icon">⚡</span>/ws/live</h3>
+        <p>Push berth-state changes to the dashboard in real-time</p>
+        <div class="meta">Replaces 60s polling when connected</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow"><svg width="26" height="32" viewBox="0 0 26 32"><path d="M13 0 L13 24 M4 18 L13 28 L22 18" stroke="#ff4081" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+
+  <!-- ── LAYER 8: UI ──────────────────────────────────────────────── -->
+  <div class="layer ui">
+    <div class="layer-head">
+      <span class="layer-badge">⑧ Frontend / UX</span>
+      <span class="layer-title">MapLibre GL JS + Plotly Dash (analytics)</span>
+      <span class="layer-desc">What APA sees. Map-first operational view + analytics page for dwell predictions and ablations.</span>
+    </div>
+    <div class="components">
+      <div class="component">
+        <div class="tag">MAPLIBRE 4.7</div>
+        <h3><span class="icon">🗺</span>alexandria-port-2d.html</h3>
+        <p>Real-time operational map · 6 base-maps · 3 coloring modes · cargo queue + ops panels</p>
+        <div class="meta">Works now · running on :8000</div>
+      </div>
+      <div class="component">
+        <div class="tag">PLOTLY DASH</div>
+        <h3><span class="icon">📊</span>analytics/</h3>
+        <p>Predicted vs observed dwell, feature importance, ablation studies, Gantt optimizer plan</p>
+        <div class="meta">Week 7 deliverable</div>
+      </div>
+      <div class="component">
+        <div class="tag">CESIUM (LEGACY)</div>
+        <h3><span class="icon">🌐</span>alexandria-port-demo.html</h3>
+        <p>3D flyover view — kept for thesis defense hero shot</p>
+        <div class="meta">Secondary, not operational</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="meta-row">
+  <div class="meta-card"><div class="v">56</div><div class="l">Berth polygons</div></div>
+  <div class="meta-card"><div class="v">127</div><div class="l">Live vessels</div></div>
+  <div class="meta-card"><div class="v">55</div><div class="l">Planned arrivals</div></div>
+  <div class="meta-card"><div class="v">1,092</div><div class="l">Cargo manifests</div></div>
+  <div class="meta-card"><div class="v">930</div><div class="l">PortWatch days</div></div>
+  <div class="meta-card"><div class="v">0.4</div><div class="l">Events / sec</div></div>
+  <div class="meta-card"><div class="v">15</div><div class="l">DB tables</div></div>
+  <div class="meta-card"><div class="v">40</div><div class="l">Citations</div></div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Ingestion</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Storage</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Feature Eng.</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>ML / Pillar 1</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Optimization / Pillars 2-3</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>API</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div>Frontend</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fff;outline:1px solid var(--yellow)"></div>★ Novel contribution</div>
+</div>
+
+<div class="footer">
+  REAL DATA · NO SYNTHETIC · NO KAFKA · NO FAKE KPI ·
+  Graduation Project 2026 · Alexandria University
+</div>
+
+</body>
+</html>

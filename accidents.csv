@@ -1,0 +1,14 @@
+date,vessel_type,accident_type,severity
+2025-10-25,container,collision,minor
+2025-01-14,container,machinery_failure,minor
+2025-05-24,container,allision,minor
+2025-04-28,container,grounding,minor
+2025-01-13,dry_bulk,grounding,minor
+2025-03-25,dry_bulk,collision,minor
+2025-10-31,dry_bulk,collision,minor
+2025-09-13,dry_bulk,grounding,minor
+2026-03-16,general_cargo,collision,minor
+2025-05-23,general_cargo,collision,serious
+2025-02-10,general_cargo,allision,major
+2025-02-12,general_cargo,allision,minor
+2026-01-22,tanker,allision,serious

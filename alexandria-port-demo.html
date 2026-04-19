@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alexandria Port Digital Twin — Cesium Live Demo</title>
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.123/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.123/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg-primary: #0a0e17;
+    --bg-card: rgba(10, 14, 23, 0.92);
+    --text-primary: #e0e8f0;
+    --text-secondary: #8b9dc3;
+    --accent-blue: #00d4ff;
+    --accent-green: #00ff9d;
+    --accent-yellow: #ffa726;
+    --accent-red: #ef5350;
+    --accent-purple: #ab47bc;
+    --border: rgba(0, 212, 255, 0.2);
+    --border-strong: rgba(0, 212, 255, 0.5);
+  }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0e17; font-family: 'Inter', sans-serif; color: var(--text-primary); }
+  #cesiumContainer { position: absolute; inset: 0; background: linear-gradient(180deg, #87CEEB 0%, #b0d8ec 40%, #1a6fa0 100%); }
+
+  /* TOP HEADER */
+  #top-header {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 100;
+    background: linear-gradient(to bottom, rgba(10,14,23,0.95), transparent);
+    padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+    pointer-events: none;
+  }
+  .logo-area { display: flex; align-items: center; gap: 14px; pointer-events: auto; }
+  .logo-icon {
+    width: 46px; height: 46px; border-radius: 10px;
+    background: linear-gradient(135deg, #00d4ff, #0055cc);
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+  }
+  .logo-text h1 {
+    font-size: 15px; font-weight: 700; color: var(--accent-blue);
+    letter-spacing: 3px; text-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+  }
+  .logo-text p { font-size: 10px; color: #4a7a9b; letter-spacing: 2px; margin-top: 2px; }
+
+  .header-right { display: flex; align-items: center; gap: 14px; pointer-events: auto; }
+  .live-badge {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(0, 255, 100, 0.12); border: 1px solid rgba(0, 255, 100, 0.4);
+    border-radius: 20px; padding: 6px 14px;
+  }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); animation: blink 1.5s infinite; box-shadow: 0 0 8px var(--accent-green); }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .live-badge span { font-size: 11px; color: var(--accent-green); letter-spacing: 2px; font-weight: 700; }
+  #clock { font-size: 18px; font-weight: 700; color: var(--accent-green); font-family: 'JetBrains Mono', monospace; letter-spacing: 2px; }
+
+  /* STATS BAR */
+  #stats-bar {
+    position: absolute; top: 85px; left: 50%; transform: translateX(-50%);
+    z-index: 100; display: flex; gap: 10px; pointer-events: none;
+  }
+  .stat-pill {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 22px; padding: 8px 16px; display: flex; align-items: center; gap: 8px;
+    backdrop-filter: blur(10px);
+  }
+  .stat-pill .num { font-size: 16px; font-weight: 700; color: var(--accent-blue); font-family: 'JetBrains Mono', monospace; }
+  .stat-pill .lbl { font-size: 10px; color: #4a7a9b; letter-spacing: 1.5px; text-transform: uppercase; }
+
+  /* LEFT CONTROLS PANEL */
+  #left-panel {
+    position: absolute; left: 20px; top: 140px; z-index: 100;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px; width: 230px;
+    backdrop-filter: blur(10px); border-top: 2px solid var(--accent-blue);
+  }
+  #left-panel h3 { font-size: 11px; color: var(--accent-blue); letter-spacing: 2px; margin-bottom: 12px; text-transform: uppercase; }
+  .layer-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0; cursor: pointer; transition: all 0.2s;
+  }
+  .layer-item:hover { padding-left: 4px; }
+  .layer-label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-primary); }
+  .layer-color { width: 12px; height: 12px; border-radius: 3px; }
+  .toggle {
+    width: 36px; height: 18px; background: #2a3f5f; border-radius: 10px;
+    position: relative; cursor: pointer; transition: all 0.3s;
+  }
+  .toggle.active { background: var(--accent-blue); box-shadow: 0 0 8px rgba(0, 212, 255, 0.4); }
+  .toggle::after {
+    content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+    background: white; border-radius: 50%; transition: all 0.3s;
+  }
+  .toggle.active::after { left: 20px; }
+
+  /* RIGHT KPI PANEL */
+  #kpi-panel {
+    position: absolute; right: 20px; top: 140px; z-index: 100;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; width: 280px;
+    backdrop-filter: blur(10px); border-top: 2px solid var(--accent-blue);
+  }
+  #kpi-panel h3 { font-size: 11px; color: var(--accent-blue); letter-spacing: 2px; margin-bottom: 14px; text-transform: uppercase; }
+  .kpi-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .kpi-row:last-child { border: none; }
+  .kpi-label { font-size: 11px; color: var(--text-secondary); }
+  .kpi-value { font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+  .kpi-value.good { color: var(--accent-green); }
+  .kpi-value.warn { color: var(--accent-yellow); }
+  .kpi-value.bad { color: var(--accent-red); }
+
+  .progress-bar {
+    width: 100%; height: 6px; background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px; overflow: hidden; margin-top: 4px;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    border-radius: 3px; transition: width 0.5s;
+  }
+
+  /* VESSEL DETAIL CARD (appears on click) */
+  #vessel-card {
+    position: absolute; right: 20px; bottom: 20px; z-index: 100;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px; width: 320px;
+    backdrop-filter: blur(12px); border-top: 2px solid var(--accent-green);
+    display: none;
+    box-shadow: 0 8px 32px rgba(0, 212, 255, 0.15);
+  }
+  #vessel-card h3 { font-size: 14px; color: var(--accent-green); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .vessel-close {
+    position: absolute; right: 14px; top: 14px; cursor: pointer;
+    color: var(--text-secondary); font-size: 18px; line-height: 1;
+  }
+  .vessel-close:hover { color: var(--accent-red); }
+  .vc-row {
+    display: flex; justify-content: space-between; padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06); font-size: 11px;
+  }
+  .vc-row:last-of-type { border: none; }
+  .vc-label { color: var(--text-secondary); }
+  .vc-value { color: var(--text-primary); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+  .status-badge {
+    padding: 3px 10px; border-radius: 10px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .status-badge.loading { background: rgba(255, 167, 38, 0.2); color: var(--accent-yellow); border: 1px solid var(--accent-yellow); }
+  .status-badge.docked { background: rgba(0, 255, 157, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
+  .status-badge.approaching { background: rgba(0, 212, 255, 0.2); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
+  .status-badge.anchored { background: rgba(171, 71, 188, 0.2); color: var(--accent-purple); border: 1px solid var(--accent-purple); }
+
+  .vc-action {
+    margin-top: 12px; width: 100%; padding: 9px;
+    background: linear-gradient(135deg, var(--accent-blue), #0088cc);
+    border: none; border-radius: 8px; color: white; font-weight: 600;
+    cursor: pointer; font-size: 12px; letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+  .vc-action:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4); }
+
+  /* BOTTOM CONTROLS */
+  #bottom-controls {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100;
+    display: flex; gap: 8px;
+  }
+  .ctrl-btn {
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--accent-blue); font-size: 11px; letter-spacing: 1px;
+    padding: 10px 16px; border-radius: 8px; cursor: pointer;
+    font-family: inherit; backdrop-filter: blur(8px);
+    transition: all 0.2s; text-transform: uppercase; font-weight: 600;
+  }
+  .ctrl-btn:hover { background: rgba(0, 212, 255, 0.15); border-color: var(--border-strong); }
+  .ctrl-btn.active { background: var(--accent-blue); color: white; }
+
+  /* LOADING */
+  #loading {
+    position: absolute; inset: 0; z-index: 999;
+    background: var(--bg-primary);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; transition: opacity 0.6s;
+  }
+  .spinner {
+    width: 60px; height: 60px; border: 3px solid rgba(0, 212, 255, 0.1);
+    border-top-color: var(--accent-blue); border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading .title { color: var(--accent-blue); letter-spacing: 3px; font-size: 13px; font-weight: 700; }
+  #loading .status { color: var(--text-secondary); font-size: 11px; letter-spacing: 1px; }
+
+  /* LEGEND */
+  #legend {
+    position: absolute; left: 20px; bottom: 20px; z-index: 100;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+    backdrop-filter: blur(10px);
+  }
+  #legend h4 { font-size: 10px; color: var(--accent-blue); letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
+  .legend-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 11px; color: var(--text-primary); }
+  .legend-box { width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255, 255, 255, 0.2); }
+
+  /* CONNECTION STATUS */
+  #connection-status {
+    position: absolute; bottom: 20px; right: 20px; z-index: 99;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px;
+    backdrop-filter: blur(10px); font-size: 10px; letter-spacing: 1px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .conn-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .conn-dot.disconnected { background: var(--accent-red); }
+  .conn-dot.connecting { background: var(--accent-yellow); animation: blink 1s infinite; }
+  .conn-dot.connected { background: var(--accent-green); }
+
+  /* CESIUM OVERRIDES */
+  .cesium-widget-credits { display: none !important; }
+  .cesium-viewer-toolbar { display: none !important; }
+  .cesium-viewer-geocoderContainer { display: none; }
+  .cesium-viewer-animationContainer,
+  .cesium-viewer-timelineContainer { display: none; }
+  .cesium-infoBox { background: var(--bg-card) !important; border: 1px solid var(--border) !important; }
+  .cesium-infoBox-title { background: linear-gradient(135deg, var(--accent-blue), #0055cc) !important; color: white !important; }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="title">INITIALIZING ALEXANDRIA PORT</div>
+  <div class="status" id="loading-status">Loading 3D globe...</div>
+</div>
+
+<div id="cesiumContainer"></div>
+
+<!-- TOP HEADER -->
+<div id="top-header">
+  <div class="logo-area">
+    <div class="logo-icon">⚓</div>
+    <div class="logo-text">
+      <h1>ALEXANDRIA PORT DT</h1>
+      <p>DIGITAL TWIN · LIVE OPERATIONS</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span>LIVE</span>
+    </div>
+    <div id="clock">--:--:--</div>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div id="stats-bar">
+  <div class="stat-pill"><span class="num" id="stat-vessels">29</span><span class="lbl">Vessels</span></div>
+  <div class="stat-pill"><span class="num" id="stat-berths">25/79</span><span class="lbl">Berths</span></div>
+  <div class="stat-pill"><span class="num" id="stat-yard">54%</span><span class="lbl">Yard</span></div>
+  <div class="stat-pill"><span class="num" id="stat-cargo">8.1K</span><span class="lbl">Tons/hr</span></div>
+</div>
+
+<!-- LEFT: LAYER CONTROLS -->
+<div id="left-panel">
+  <h3>⚙ MAP LAYERS</h3>
+  <div class="layer-item" data-layer="zones">
+    <div class="layer-label"><div class="layer-color" style="background: #00d4ff;"></div>Port Zones</div>
+    <div class="toggle active"></div>
+  </div>
+  <div class="layer-item" data-layer="buildings">
+    <div class="layer-label"><div class="layer-color" style="background: #9e9e9e;"></div>City Buildings</div>
+    <div class="toggle"></div>
+  </div>
+  <div class="layer-item" data-layer="cranes">
+    <div class="layer-label"><div class="layer-color" style="background: #ff6b35;"></div>STS Cranes (3D)</div>
+    <div class="toggle"></div>
+  </div>
+  <div class="layer-item" data-layer="vessels">
+    <div class="layer-label"><div class="layer-color" style="background: #fffacd;"></div>Vessels</div>
+    <div class="toggle active"></div>
+  </div>
+  <div class="layer-item" data-layer="berths">
+    <div class="layer-label"><div class="layer-color" style="background: var(--accent-green);"></div>Berths</div>
+    <div class="toggle active"></div>
+  </div>
+  <div class="layer-item" data-layer="yards">
+    <div class="layer-label"><div class="layer-color" style="background: var(--accent-blue);"></div>Container Yards</div>
+    <div class="toggle active"></div>
+  </div>
+  <div class="layer-item" data-layer="channels">
+    <div class="layer-label"><div class="layer-color" style="background: var(--accent-yellow);"></div>Nav. Channels</div>
+    <div class="toggle active"></div>
+  </div>
+</div>
+
+<!-- RIGHT: KPI PANEL -->
+<div id="kpi-panel">
+  <h3>📊 OPERATIONS KPIs</h3>
+  <div class="kpi-row">
+    <span class="kpi-label">Weather</span>
+    <span class="kpi-value good">24.5°C ☀</span>
+  </div>
+  <div class="kpi-row">
+    <span class="kpi-label">Wind Speed</span>
+    <span class="kpi-value">12 kts</span>
+  </div>
+  <div class="kpi-row">
+    <span class="kpi-label">Visibility</span>
+    <span class="kpi-value good">10 km</span>
+  </div>
+  <div class="kpi-row">
+    <span class="kpi-label">Active Vessels</span>
+    <span class="kpi-value" id="kpi-vessels">7</span>
+  </div>
+  <div class="kpi-row">
+    <span class="kpi-label">Berth Utilization</span>
+    <span class="kpi-value warn">63%</span>
+  </div>
+  <div style="margin-top: 14px;">
+    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+      <span class="kpi-label">Container Yard</span>
+      <span class="kpi-value">54%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width: 54%;"></div></div>
+  </div>
+  <div style="margin-top: 10px;">
+    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+      <span class="kpi-label">Warehouse</span>
+      <span class="kpi-value warn">77%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width: 77%; background: linear-gradient(90deg, var(--accent-yellow), var(--accent-red));"></div></div>
+  </div>
+</div>
+
+<!-- VESSEL CARD -->
+<div id="vessel-card">
+  <span class="vessel-close" onclick="closeVesselCard()">✕</span>
+  <h3>🚢 <span id="vc-name">VESSEL</span></h3>
+  <div class="vc-row"><span class="vc-label">MMSI</span><span class="vc-value" id="vc-mmsi">—</span></div>
+  <div class="vc-row"><span class="vc-label">Voyage No.</span><span class="vc-value" id="vc-voyage">—</span></div>
+  <div class="vc-row"><span class="vc-label">Type</span><span class="vc-value" id="vc-type">—</span></div>
+  <div class="vc-row"><span class="vc-label">Length</span><span class="vc-value" id="vc-length">—</span></div>
+  <div class="vc-row"><span class="vc-label">Cargo</span><span class="vc-value" id="vc-cargo">—</span></div>
+  <div class="vc-row"><span class="vc-label">ETB / ATB</span><span class="vc-value" id="vc-etb">—</span></div>
+  <div class="vc-row"><span class="vc-label">Agent</span><span class="vc-value" id="vc-agent">—</span></div>
+  <div class="vc-row"><span class="vc-label">Status</span><span class="status-badge" id="vc-status">—</span></div>
+  <button class="vc-action" onclick="openLoadPlanner()">📦 PLAN LOADING (AI BIN PACKER) →</button>
+</div>
+
+<!-- LEGEND -->
+<div id="legend">
+  <h4>BERTH STATUS</h4>
+  <div class="legend-item"><div class="legend-box" style="background: #00ff9d; opacity: 0.6;"></div>Free</div>
+  <div class="legend-item"><div class="legend-box" style="background: #ef5350; opacity: 0.6;"></div>Occupied</div>
+  <div class="legend-item"><div class="legend-box" style="background: #ffa726; opacity: 0.6;"></div>Maintenance</div>
+</div>
+
+<!-- BOTTOM CAMERA CONTROLS -->
+<div id="bottom-controls">
+  <button class="ctrl-btn" onclick="flyToPort()">📍 OVERVIEW</button>
+  <button class="ctrl-btn" onclick="flyToBerths()">🚢 BERTHS</button>
+  <button class="ctrl-btn" onclick="flyToYard()">📦 YARD</button>
+  <button class="ctrl-btn" onclick="flyToCity()">🏙 CITY</button>
+  <button class="ctrl-btn active" id="view-mode" onclick="toggleView()">3D</button>
+</div>
+
+<!-- CONNECTION STATUS -->
+<div id="connection-status">
+  <div class="conn-dot disconnected" id="conn-dot"></div>
+  <span id="conn-text">BACKEND: DISCONNECTED</span>
+</div>
+
+<script>
+// ============================================================
+// CESIUM INITIALIZATION
+// ============================================================
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJkYzg2OGRjNC1kNmNhLTRkYjAtODM5NS1mOTBkMjhmMmUyMWEiLCJpZCI6NDE2Nzg1LCJpYXQiOjE3NzU5MDg4MTd9.D4kZvka6OquM7KIQcFKREBT7hPWK_b0HJkAmKgRXxvI';
+
+const loadingStatus = (msg) => {
+  const el = document.getElementById('loading-status');
+  if (el) el.textContent = msg;
+};
+
+// Create viewer — imagery & terrain set explicitly after construction
+// (async APIs can't be used inside the Viewer constructor in modern Cesium).
+const viewer = new Cesium.Viewer('cesiumContainer', {
+  animation: false,
+  timeline: false,
+  fullscreenButton: false,
+  homeButton: false,
+  infoBox: true,
+  sceneModePicker: false,
+  selectionIndicator: true,
+  navigationHelpButton: false,
+  geocoder: false,
+  baseLayerPicker: false,
+  infoBox: false,           // we use our own vessel card → kills file:// iframe warning
+  shouldAnimate: true,
+});
+
+// ── Scene tuning: bright daytime sky, no darkness ──────────────
+viewer.scene.globe.enableLighting = false;
+viewer.scene.fog.enabled = false;
+viewer.scene.skyAtmosphere.show = true;
+viewer.scene.skyAtmosphere.brightnessShift = 0.55;
+viewer.scene.skyAtmosphere.saturationShift = 0.15;
+viewer.scene.skyAtmosphere.hueShift = 0.0;
+viewer.scene.globe.showGroundAtmosphere = true;
+viewer.scene.globe.depthTestAgainstTerrain = true;
+viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#1a6fa0');
+viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#87CEEB');
+viewer.scene.sun.show = true;
+viewer.scene.moon.show = false;
+viewer.scene.skyBox.show = false;
+// Lock clock to local noon so imagery and sky are bright
+viewer.clock.currentTime = Cesium.JulianDate.fromIso8601(
+    new Date().toISOString().slice(0,10) + 'T10:00:00Z');
+viewer.clock.shouldAnimate = false;
+
+// ── Satellite imagery: Esri World Imagery (free, no token, reliable) ──────
+// UrlTemplateImageryProvider is synchronous & always works in Cesium 1.123.
+// Ion providers are tried as an OPTIONAL upgrade afterwards.
+function loadImagery() {
+  // PRIMARY: Esri World Imagery — satellite, no token, always works
+  const esri = new Cesium.UrlTemplateImageryProvider({
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    credit: 'Tiles © Esri',
+    maximumLevel: 19,
+  });
+  viewer.imageryLayers.removeAll();
+  const baseLayer = viewer.imageryLayers.addImageryProvider(esri);
+  baseLayer.brightness = 1.15;
+  baseLayer.contrast   = 1.12;
+  baseLayer.saturation = 1.25;
+  console.log('OK imagery: Esri World Imagery (satellite, no token)');
+
+  // Add a labels layer on top (street names — helps orient city context)
+  const labels = new Cesium.UrlTemplateImageryProvider({
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    credit: 'Tiles © Esri',
+    maximumLevel: 19,
+  });
+  const labelLayer = viewer.imageryLayers.addImageryProvider(labels);
+  labelLayer.alpha = 0.75;
+
+  // Optional upgrade: try Ion Bing Aerial (higher-res if token allows)
+  (async () => {
+    try {
+      const bing = await Cesium.IonImageryProvider.fromAssetId(3);
+      const bingLayer = viewer.imageryLayers.addImageryProvider(bing);
+      viewer.imageryLayers.raiseToTop(bingLayer);
+      viewer.imageryLayers.raiseToTop(labelLayer);  // keep labels on top
+      bingLayer.brightness = 1.18;
+      bingLayer.contrast   = 1.12;
+      bingLayer.saturation = 1.2;
+      console.log('OK upgraded imagery: Bing Aerial (Ion asset 3)');
+    } catch (e) {
+      console.log('[info] Ion imagery upgrade skipped — staying on Esri:', e.message);
+    }
+  })();
+}
+loadImagery();
+
+// Terrain (optional — if it fails we stay on the smooth ellipsoid)
+(async () => {
+  try {
+    const terrain = await Cesium.CesiumTerrainProvider.fromIonAssetId(1);
+    viewer.terrainProvider = terrain;
+    console.log('OK terrain: Cesium World Terrain');
+  } catch (e) {
+    console.warn('World Terrain failed, using ellipsoid:', e.message);
+  }
+})();
+
+// ============================================================
+// ALEXANDRIA PORT COORDINATES
+// Accurate approximation based on SASPlanet satellite imagery
+// ============================================================
+const ALEX = {
+  center: { lon: 29.8700, lat: 31.1900 },
+
+  berths: [
+    { id: 'B49', name: 'Berth 49', status: 'occupied', vessel: 'EVER GIVEN',
+      coords: [[29.8620, 31.1870], [29.8680, 31.1868], [29.8680, 31.1878], [29.8620, 31.1880]] },
+    { id: 'B50', name: 'Berth 50', status: 'occupied', vessel: 'MSC ISABELLA',
+      coords: [[29.8680, 31.1868], [29.8740, 31.1865], [29.8740, 31.1875], [29.8680, 31.1878]] },
+    { id: 'B51', name: 'Berth 51', status: 'free', vessel: null,
+      coords: [[29.8740, 31.1865], [29.8790, 31.1860], [29.8790, 31.1872], [29.8740, 31.1875]] },
+    { id: 'B52', name: 'Berth 52', status: 'maintenance', vessel: null,
+      coords: [[29.8790, 31.1860], [29.8845, 31.1856], [29.8845, 31.1868], [29.8790, 31.1872]] },
+    { id: 'B53', name: 'Berth 53', status: 'occupied', vessel: 'CMA CGM MARCO POLO',
+      coords: [[29.8845, 31.1856], [29.8900, 31.1853], [29.8900, 31.1865], [29.8845, 31.1868]] },
+    { id: 'B54', name: 'Berth 54 Tahya Masr', status: 'free', vessel: null,
+      coords: [[29.8900, 31.1853], [29.8955, 31.1850], [29.8955, 31.1862], [29.8900, 31.1865]] },
+    { id: 'B55', name: 'Berth 55 Tahya Masr', status: 'occupied', vessel: 'HMM ALGECIRAS',
+      coords: [[29.8955, 31.1850], [29.9010, 31.1848], [29.9010, 31.1860], [29.8955, 31.1862]] },
+    { id: 'B56', name: 'Berth 56', status: 'free', vessel: null,
+      coords: [[29.9010, 31.1848], [29.9060, 31.1846], [29.9060, 31.1858], [29.9010, 31.1860]] },
+  ],
+
+  yards: [
+    { id: 'Y-A', name: 'Container Yard A', occupancy: 54, capacity: 5000,
+      coords: [[29.8650, 31.1850], [29.8760, 31.1845], [29.8760, 31.1825], [29.8650, 31.1830]] },
+    { id: 'Y-B', name: 'Container Yard B', occupancy: 78, capacity: 4200,
+      coords: [[29.8760, 31.1845], [29.8880, 31.1840], [29.8880, 31.1820], [29.8760, 31.1825]] },
+    { id: 'Y-C', name: 'GBC Yard', occupancy: 92, capacity: 3500,
+      coords: [[29.8880, 31.1840], [29.8990, 31.1835], [29.8990, 31.1815], [29.8880, 31.1820]] },
+    { id: 'Y-D', name: 'Warehouse Zone', occupancy: 77, capacity: 2800,
+      coords: [[29.8990, 31.1835], [29.9090, 31.1830], [29.9090, 31.1810], [29.8990, 31.1815]] },
+  ],
+
+  channel: [
+    { lon: 29.8300, lat: 31.1700 },
+    { lon: 29.8450, lat: 31.1780 },
+    { lon: 29.8600, lat: 31.1840 },
+    { lon: 29.8750, lat: 31.1865 },
+  ],
+
+  vessels: [
+    // ── Container Terminal (East Pier: B49-B54) ────────────────
+    { mmsi: '477553000', name: 'EVER GIVEN',        type: 'Container Ship', length: 400, voyage: '2601/2601',
+      cargo: 'Mixed TEU (18,300)', agent: 'Evergreen Line', etb: '2026-04-17 08:06', status: 'loading',
+      lon: 29.8822, lat: 31.1901, heading: 250, berth: 'B49' },
+    { mmsi: '228399600', name: 'CMA CGM MARCO POLO',type: 'Container Ship', length: 396, voyage: 'CM1155',
+      cargo: 'Containers (12,500 TEU)', agent: 'CMA CGM', etb: '2026-04-17 06:15', status: 'loading',
+      lon: 29.8787, lat: 31.1890, heading: 250, berth: 'B53' },
+    { mmsi: '248921000', name: 'MSC ISABELLA',       type: 'Container Ship', length: 366, voyage: 'MS243',
+      cargo: 'Steel Coils (8,071t)', agent: 'MSC', etb: '2026-04-16 22:30', status: 'discharging',
+      lon: 29.8770, lat: 31.1885, heading: 250, berth: 'B54' },
+    // ── Container Terminal (HBH: B71, B72, B81) ────────────────
+    { mmsi: '440451000', name: 'HMM ALGECIRAS',     type: 'Container Ship', length: 399, voyage: 'HM8821',
+      cargo: 'Containers (14,000 TEU)', agent: 'HMM', etb: '2026-04-17 12:00', status: 'loading',
+      lon: 29.8485, lat: 31.1739, heading: 270, berth: 'B71' },
+    { mmsi: '256789000', name: 'COSCO SHIPPING STAR',type: 'Container Ship', length: 335, voyage: 'CS4422',
+      cargo: 'Containers (8,200 TEU)', agent: 'COSCO', etb: '2026-04-17 03:00', status: 'loading',
+      lon: 29.8450, lat: 31.1739, heading: 270, berth: 'B72' },
+    // ── Dekheila Container (B96a, B98) ────────────────────────
+    { mmsi: '371500000', name: 'ZIM PIRAEUS',        type: 'Container Ship', length: 294, voyage: 'ZP771',
+      cargo: 'Containers (4,200 TEU)', agent: 'ZIM', etb: '2026-04-17 14:00', status: 'discharging',
+      lon: 29.8144, lat: 31.1394, heading: 270, berth: 'B96a' },
+    { mmsi: '355221000', name: 'MAERSK SEOUL',       type: 'Container Ship', length: 366, voyage: 'MK9911',
+      cargo: 'Containers (10,100 TEU)', agent: 'Maersk', etb: '2026-04-16 19:00', status: 'loading',
+      lon: 29.8034, lat: 31.1394, heading: 270, berth: 'B98' },
+    // ── RORO (B27, B28, B39) ──────────────────────────────────
+    { mmsi: '247300000', name: 'GRANDE CONGO',       type: 'RORO Cargo', length: 214, voyage: 'GC320',
+      cargo: 'Vehicles (2,400 units)', agent: 'Grimaldi', etb: '2026-04-17 05:30', status: 'discharging',
+      lon: 29.8695, lat: 31.1862, heading: 260, berth: 'B27' },
+    { mmsi: '247301000', name: 'NEPTUNE ACE',        type: 'Vehicles Carrier', length: 200, voyage: 'NA118',
+      cargo: 'Vehicles (3,100 units)', agent: 'MOL ACE', etb: '2026-04-17 09:00', status: 'loading',
+      lon: 29.8679, lat: 31.1860, heading: 260, berth: 'B28' },
+    { mmsi: '311500000', name: 'EUROCARGO BARI',     type: 'RORO Cargo', length: 182, voyage: 'EB91',
+      cargo: 'Trucks & trailers', agent: 'Grimaldi', etb: '2026-04-18 01:00', status: 'docked',
+      lon: 29.8746, lat: 31.1844, heading: 255, berth: 'B39' },
+    // ── Passenger (B18, B20) ─────────────────────────────────
+    { mmsi: '310588000', name: 'CELESTYAL JOURNEY',  type: 'Cruise Ship', length: 253, voyage: 'CJ12',
+      cargo: 'Passengers (1,260)', agent: 'Celestyal', etb: '2026-04-18 06:00', status: 'docked',
+      lon: 29.8795, lat: 31.1877, heading: 260, berth: 'B18' },
+    { mmsi: '319200000', name: 'COSTA TOSCANA',      type: 'Cruise Ship', length: 337, voyage: 'CT88',
+      cargo: 'Passengers (5,224)', agent: 'Costa Cruises', etb: '2026-04-18 07:00', status: 'docked',
+      lon: 29.8779, lat: 31.1875, heading: 260, berth: 'B20' },
+    // ── General Cargo (B10, B14, B35, B41, B82) ──────────────
+    { mmsi: '538005000', name: 'BBC EMERALD',        type: 'MPP/Heavy-Lift', length: 141, voyage: 'BE333',
+      cargo: 'Project Cargo (6,200t)', agent: 'BBC', etb: '2026-04-17 20:00', status: 'discharging',
+      lon: 29.8703, lat: 31.1822, heading: 260, berth: 'B10' },
+    { mmsi: '538006000', name: 'SPLIETHOFF HELDER',  type: 'General Cargo', length: 155, voyage: 'SH44',
+      cargo: 'Steel + General (7,800t)', agent: 'Spliethoff', etb: '2026-04-16 16:00', status: 'loading',
+      lon: 29.8648, lat: 31.1814, heading: 260, berth: 'B14' },
+    { mmsi: '636100000', name: 'DONA LIBERTA',       type: 'General Cargo', length: 130, voyage: 'DL22',
+      cargo: 'Rice (4,500t)', agent: 'Mediterranean Shipping', etb: '2026-04-17 11:00', status: 'discharging',
+      lon: 29.8795, lat: 31.1856, heading: 255, berth: 'B35' },
+    { mmsi: '538007000', name: 'AL NADA',            type: 'General Cargo', length: 110, voyage: 'AN09',
+      cargo: 'General (3,200t)', agent: 'Nada Shipping', etb: '2026-04-18 04:00', status: 'docked',
+      lon: 29.8713, lat: 31.1837, heading: 255, berth: 'B41' },
+    { mmsi: '538008000', name: 'POAVOSA WISDOM V',   type: 'General Cargo', length: 119, voyage: 'PW61',
+      cargo: 'Timber (5,100t)', agent: 'Poavosa', etb: '2026-04-17 00:30', status: 'loading',
+      lon: 29.8402, lat: 31.1739, heading: 270, berth: 'B82' },
+    // ── Petroleum (B87/1, B87/5) ─────────────────────────────
+    { mmsi: '636200000', name: 'NISSOS RHENIA',      type: 'Oil Tanker', length: 274, voyage: 'NR44',
+      cargo: 'Crude Oil (105,000t)', agent: 'Okeanis Eco Tankers', etb: '2026-04-17 02:00', status: 'discharging',
+      lon: 29.8421, lat: 31.1684, heading: 270, berth: 'B87_1' },
+    { mmsi: '636201000', name: 'DELTA PIONEER',      type: 'Products Tanker', length: 183, voyage: 'DP19',
+      cargo: 'Diesel (48,000t)', agent: 'Delta Tankers', etb: '2026-04-16 08:00', status: 'discharging',
+      lon: 29.8357, lat: 31.1684, heading: 270, berth: 'B87_5' },
+    // ── Grain (B84, B85, B92-Dekheila) ───────────────────────
+    { mmsi: '211281000', name: 'BARBARA',            type: 'Bulk Carrier', length: 225, voyage: 'BR1193',
+      cargo: 'Wheat (45,000t)', agent: 'Hapag-Lloyd', etb: '2026-04-18 06:00', status: 'loading',
+      lon: 29.8462, lat: 31.1714, heading: 270, berth: 'B84' },
+    { mmsi: '241500000', name: 'AGRISAN',            type: 'Bulk Carrier', length: 190, voyage: 'AG77',
+      cargo: 'Corn (32,000t)', agent: 'Agri Shipping', etb: '2026-04-17 15:00', status: 'discharging',
+      lon: 29.8440, lat: 31.1714, heading: 270, berth: 'B85' },
+    { mmsi: '241501000', name: 'VENUS GLORY',        type: 'Bulk Carrier', length: 229, voyage: 'VG43',
+      cargo: 'Wheat (55,000t)', agent: 'Venus Intl', etb: '2026-04-17 10:00', status: 'discharging',
+      lon: 29.8183, lat: 31.1419, heading: 270, berth: 'B92' },
+    // ── Coal / Dirty Bulk (B63, B65) ─────────────────────────
+    { mmsi: '353600000', name: 'CAPE PROVENCE',      type: 'Bulk Carrier', length: 292, voyage: 'CP56',
+      cargo: 'Coal (82,000t)', agent: 'Anglo American', etb: '2026-04-16 14:00', status: 'discharging',
+      lon: 29.8542, lat: 31.1759, heading: 270, berth: 'B63' },
+    { mmsi: '353601000', name: 'DESPINA V',          type: 'Bulk Carrier', length: 230, voyage: 'DV03',
+      cargo: 'Iron Ore (52,000t)', agent: 'Global Shipping', etb: '2026-04-17 07:00', status: 'loading',
+      lon: 29.8510, lat: 31.1759, heading: 270, berth: 'B65' },
+    // ── Dekheila Mining (B90/1) ──────────────────────────────
+    { mmsi: '354000000', name: 'ANANGEL HARMONY',    type: 'Bulk Carrier', length: 300, voyage: 'AH12',
+      cargo: 'Phosphate (95,000t)', agent: 'Anangel', etb: '2026-04-16 20:00', status: 'loading',
+      lon: 29.8254, lat: 31.1464, heading: 270, berth: 'B90_1' },
+    // ── Dekheila Grain (B94a) ────────────────────────────────
+    { mmsi: '242000000', name: 'GOLDEN BULL',        type: 'Bulk Carrier', length: 200, voyage: 'GB88',
+      cargo: 'Soybeans (40,000t)', agent: 'Golden Grain', etb: '2026-04-17 18:00', status: 'discharging',
+      lon: 29.8147, lat: 31.1419, heading: 270, berth: 'B94a' },
+    // ── Approaching (in channel / anchorage) ─────────────────
+    { mmsi: '636092000', name: 'MAERSK DETROIT',     type: 'Container Ship', length: 335, voyage: 'MK4412',
+      cargo: 'Mixed TEU', agent: 'Maersk', etb: '2026-04-18 15:30', status: 'approaching',
+      lon: 29.8720, lat: 31.2050, heading: 200, berth: null },
+    { mmsi: '563030000', name: 'ONE TRIUMPH',        type: 'Container Ship', length: 400, voyage: 'ON7721',
+      cargo: 'Consumer Goods (16,000 TEU)', agent: 'ONE', etb: '2026-04-18 20:00', status: 'approaching',
+      lon: 29.8550, lat: 31.2100, heading: 210, berth: null },
+    // ── Anchored (waiting for berth) ─────────────────────────
+    { mmsi: '538100000', name: 'NORD VENUS',         type: 'Bulk Carrier', length: 200, voyage: 'NV17',
+      cargo: 'Grain (42,000t)', agent: 'Norden', etb: '2026-04-19 06:00', status: 'anchored',
+      lon: 29.8200, lat: 31.2200, heading: 0, berth: null },
+    { mmsi: '636300000', name: 'ALPINE MAYA',        type: 'Products Tanker', length: 183, voyage: 'AM33',
+      cargo: 'Gasoline (38,000t)', agent: 'Alpine Tankers', etb: '2026-04-19 12:00', status: 'anchored',
+      lon: 29.8100, lat: 31.2150, heading: 0, berth: null },
+  ],
+};
+
+// ============================================================
+// CAMERA PRESETS
+// ============================================================
+// All presets have moderate pitch (-22° to -35°) to keep sky + horizon
+// in the frame — much more cinematic than straight-down views.
+const CAMERA = {
+  overview: {
+    destination: Cesium.Cartesian3.fromDegrees(29.8500, 31.1550, 6000),
+    orientation: { heading: Cesium.Math.toRadians(10), pitch: Cesium.Math.toRadians(-30), roll: 0 },
+  },
+  berths: {
+    destination: Cesium.Cartesian3.fromDegrees(29.8650, 31.1750, 2500),
+    orientation: { heading: Cesium.Math.toRadians(15), pitch: Cesium.Math.toRadians(-35), roll: 0 },
+  },
+  yards: {
+    destination: Cesium.Cartesian3.fromDegrees(29.8700, 31.1780, 1200),
+    orientation: { heading: Cesium.Math.toRadians(-15),pitch: Cesium.Math.toRadians(-30), roll: 0 },
+  },
+  city: {
+    destination: Cesium.Cartesian3.fromDegrees(29.895, 31.210, 2500),
+    orientation: { heading: Cesium.Math.toRadians(180),pitch: Cesium.Math.toRadians(-20), roll: 0 },
+  },
+};
+
+function flyToPort() { viewer.camera.flyTo({ ...CAMERA.overview, duration: 2 }); }
+function flyToBerths() { viewer.camera.flyTo({ ...CAMERA.berths, duration: 2 }); }
+function flyToYard() { viewer.camera.flyTo({ ...CAMERA.yards, duration: 2 }); }
+function flyToCity() { viewer.camera.flyTo({ ...CAMERA.city, duration: 2 }); }
+
+// Set initial camera
+viewer.camera.setView(CAMERA.overview);
+
+// ============================================================
+// LOAD OSM 3D BUILDINGS
+// Google Photorealistic 3D Tiles do NOT cover Alexandria, so we
+// use OSM extruded footprints + procedural port equipment models.
+// ============================================================
+let osmBuildingsTileset = null;
+
+async function loadOSMBuildings() {
+  try {
+    loadingStatus('Loading OSM 3D Buildings...');
+    osmBuildingsTileset = await Cesium.createOsmBuildingsAsync();
+    viewer.scene.primitives.add(osmBuildingsTileset);
+    console.log('✓ OSM 3D Buildings loaded');
+    return true;
+  } catch (e) {
+    console.warn('OSM Buildings failed:', e.message);
+    return false;
+  }
+}
+
+// ============================================================
+// BUILD PORT ENTITIES
+// ============================================================
+const berthEntities = [];
+const yardEntities = [];
+const vesselEntities = [];
+const craneEntities = [];
+let channelEntity = null;
+
+// ============================================================
+// PROCEDURAL STS CRANES
+// Ship-to-shore gantry cranes built from Cesium primitives
+// (no external GLB needed). Placed along the quay at each berth.
+// Real STS crane rough dimensions: ~40m tall legs, ~70m boom reach.
+// ============================================================
+function buildCranes() {
+  const CRANE_HEIGHT = 45;      // legs
+  const CRANE_WIDTH  = 22;      // gantry width (rail-to-rail)
+  const BOOM_LENGTH  = 65;      // boom reach out over water
+  const LEG_THICK    = 2.5;
+  const BOOM_THICK   = 3.0;
+  const ORANGE       = Cesium.Color.fromCssColorString('#e85d24');
+  const DARK_FRAME   = Cesium.Color.fromCssColorString('#1a2530');
+
+  // For each non-maintenance berth, place 2 cranes along its front edge.
+  ALEX.berths.forEach(berth => {
+    if (berth.status === 'maintenance') return;
+
+    // Take the two quay-side corners (coords[0] and coords[1] are the sea side)
+    const [c0, c1] = [berth.coords[0], berth.coords[1]];
+    // Place cranes at 30% and 70% along the berth front
+    [0.30, 0.70].forEach((t, idx) => {
+      const lon = c0[0] + (c1[0] - c0[0]) * t;
+      const lat = c0[1] + (c1[1] - c0[1]) * t;
+
+      // 4 legs of the gantry (cylinders) — 2 landside + 2 seaside
+      // Rough offset ~ 0.0001 deg ≈ 11 m
+      const halfWm = CRANE_WIDTH / 2 / 111000;  // half-width in degrees lat
+      const legOffsets = [
+        [-halfWm,  halfWm],  // seaside-left
+        [ halfWm,  halfWm],  // seaside-right
+        [-halfWm, -halfWm],  // landside-left
+        [ halfWm, -halfWm],  // landside-right
+      ];
+      legOffsets.forEach(([dLon, dLat]) => {
+        craneEntities.push(viewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(lon + dLon, lat + dLat, CRANE_HEIGHT / 2),
+          cylinder: {
+            length: CRANE_HEIGHT,
+            topRadius: LEG_THICK / 2,
+            bottomRadius: LEG_THICK / 2,
+            material: DARK_FRAME,
+          },
+          properties: { type: 'crane_part', berth: berth.id },
+        }));
+      });
+
+      // Top cross-beam (horizontal box at the top of the gantry)
+      craneEntities.push(viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lon, lat, CRANE_HEIGHT),
+        box: {
+          dimensions: new Cesium.Cartesian3(6, CRANE_WIDTH, 3),
+          material: ORANGE,
+        },
+        properties: { type: 'crane_part', berth: berth.id },
+      }));
+
+      // Boom arm — long horizontal box extending over the water (negative lat direction ≈ seaward)
+      // Compute seaward direction from berth geometry: coord[0]→coord[3] goes landward, so reverse.
+      const seawardLat = lat - (BOOM_LENGTH / 2) / 111000;
+      craneEntities.push(viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lon, seawardLat, CRANE_HEIGHT + 2),
+        box: {
+          dimensions: new Cesium.Cartesian3(BOOM_THICK, BOOM_LENGTH, BOOM_THICK),
+          material: ORANGE,
+        },
+        properties: { type: 'crane_part', berth: berth.id },
+      }));
+
+      // Operator cab (small box under the boom, seaside)
+      craneEntities.push(viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lon, lat - 5 / 111000, CRANE_HEIGHT - 4),
+        box: {
+          dimensions: new Cesium.Cartesian3(3, 4, 3),
+          material: Cesium.Color.fromCssColorString('#cccccc'),
+        },
+        properties: { type: 'crane_part', berth: berth.id },
+      }));
+
+      // Label above the crane
+      craneEntities.push(viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(lon, lat, CRANE_HEIGHT + 8),
+        label: {
+          text: `STS-${berth.id.slice(1)}${idx+1}`,
+          font: 'bold 10px Inter, sans-serif',
+          fillColor: Cesium.Color.fromCssColorString('#ff9c4a'),
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          scale: 0.85,
+          showBackground: true,
+          backgroundColor: Cesium.Color.fromCssColorString('#0a0e17').withAlpha(0.6),
+          backgroundPadding: new Cesium.Cartesian2(4, 2),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          translucencyByDistance: new Cesium.NearFarScalar(500, 1.0, 5000, 0.0),
+        },
+        properties: { type: 'crane_label', berth: berth.id },
+      }));
+    });
+  });
+  console.log(`✓ Built ${craneEntities.length} crane parts`);
+}
+
+// ============================================================
+// PORT OPERATIONAL ZONES (Singapore JP Glass-style overlay)
+// — clean polygon outlines and coloured zones on top of the
+// satellite imagery; NO 3D containers, NO 3D ship models.
+// Just infrastructure lines, boundaries, and labels.
+// ============================================================
+const zoneEntities = [];
+
+// Outer port boundary (approximate — the breakwater + quay + back fence)
+const PORT_BOUNDARY = [
+  [29.8580, 31.1905], [29.9080, 31.1880], [29.9090, 31.1795],
+  [29.8940, 31.1780], [29.8700, 31.1790], [29.8580, 31.1810],
+  [29.8580, 31.1905],
+];
+
+// Terminal zones (broad functional areas of the port)
+const TERMINAL_ZONES = [
+  { id:'TZ-CT', name:'Container Terminal',   color:'#00d4ff',
+    coords:[[29.8620,31.1895],[29.8860,31.1885],[29.8860,31.1815],[29.8620,31.1830]] },
+  { id:'TZ-GB', name:'General / Bulk Terminal', color:'#ffa726',
+    coords:[[29.8860,31.1885],[29.9020,31.1875],[29.9020,31.1810],[29.8860,31.1815]] },
+  { id:'TZ-RO', name:'Ro-Ro / Passenger', color:'#a855f7',
+    coords:[[29.9020,31.1875],[29.9080,31.1870],[29.9080,31.1810],[29.9020,31.1810]] },
+  { id:'TZ-BK', name:'Back-of-Port (Admin & Customs)', color:'#4a9648',
+    coords:[[29.8620,31.1830],[29.9080,31.1810],[29.9080,31.1792],[29.8620,31.1792]] },
+];
+
+// Access roads / internal circulation (polyline paths)
+const PORT_ROADS = [
+  { name:'Main Spine',  coords:[[29.8640,31.1810],[29.8790,31.1808],[29.8920,31.1805],[29.9060,31.1802]] },
+  { name:'Berth Apron', coords:[[29.8620,31.1860],[29.8790,31.1858],[29.8920,31.1853],[29.9060,31.1850]] },
+  { name:'Yard Lane 1', coords:[[29.8660,31.1838],[29.8810,31.1835],[29.8970,31.1828],[29.9060,31.1825]] },
+  { name:'Yard Lane 2', coords:[[29.8660,31.1820],[29.8810,31.1817],[29.8970,31.1812],[29.9060,31.1808]] },
+];
+
+// Port gates (entry/exit points)
+const PORT_GATES = [
+  { id:'G1', name:'Gate 1 (Main)',  lon:29.9075, lat:31.1802 },
+  { id:'G2', name:'Gate 2 (Trucks)', lon:29.8650, lat:31.1798 },
+];
+
+function buildPortZones() {
+  // 0. Sea surface — big translucent cyan polygon over the port basin and
+  //    approach waters, so the satellite imagery's dark sea reads as water
+  //    instead of "black screen". Clamped to terrain.
+  const SEA_POLY = [
+    [29.7800, 31.2400], [29.9400, 31.2400],
+    [29.9400, 31.1870], [29.9080, 31.1875],
+    [29.8860, 31.1885], [29.8620, 31.1895],
+    [29.8400, 31.1870], [29.8100, 31.1920],
+    [29.7800, 31.2000],
+  ];
+  zoneEntities.push(viewer.entities.add({
+    id: 'sea_surface',
+    polygon: {
+      hierarchy: Cesium.Cartesian3.fromDegreesArray(
+        SEA_POLY.flatMap(c => [c[0], c[1]])),
+      material: Cesium.Color.fromCssColorString('#1a7aa8').withAlpha(0.30),
+      height: 0,
+      classificationType: Cesium.ClassificationType.TERRAIN,
+    },
+  }));
+
+  // 1. Outer port boundary — thin dashed line
+  zoneEntities.push(viewer.entities.add({
+    id: 'port_boundary',
+    polyline: {
+      positions: Cesium.Cartesian3.fromDegreesArray(
+        PORT_BOUNDARY.flatMap(c => [c[0], c[1]])),
+      width: 4,
+      material: new Cesium.PolylineDashMaterialProperty({
+        color: Cesium.Color.fromCssColorString('#00d4ff').withAlpha(0.95),
+        dashLength: 24,
+      }),
+      clampToGround: true,
+    },
+  }));
+
+  // 2. Terminal zones — flat coloured polygons with outline + label
+  TERMINAL_ZONES.forEach(z => {
+    zoneEntities.push(viewer.entities.add({
+      id: 'zone_' + z.id,
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray(z.coords.flatMap(c => [c[0], c[1]])),
+        material: Cesium.Color.fromCssColorString(z.color).withAlpha(0.12),
+        outline: true,
+        outlineColor: Cesium.Color.fromCssColorString(z.color).withAlpha(0.9),
+        outlineWidth: 2,
+        height: 0,
+      },
+    }));
+    // Zone label at centroid
+    const cLon = z.coords.reduce((a, c) => a + c[0], 0) / z.coords.length;
+    const cLat = z.coords.reduce((a, c) => a + c[1], 0) / z.coords.length;
+    zoneEntities.push(viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(cLon, cLat, 0),
+      label: {
+        text: z.name.toUpperCase(),
+        font: 'bold 11px Inter, sans-serif',
+        fillColor: Cesium.Color.fromCssColorString(z.color),
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        scale: 1.0,
+        showBackground: true,
+        backgroundColor: Cesium.Color.fromCssColorString('#0a0e17').withAlpha(0.75),
+        backgroundPadding: new Cesium.Cartesian2(8, 4),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        translucencyByDistance: new Cesium.NearFarScalar(2000, 1.0, 8000, 0.0),
+      },
+    }));
+  });
+
+  // 3. Roads — thin neon lines
+  PORT_ROADS.forEach(r => {
+    zoneEntities.push(viewer.entities.add({
+      polyline: {
+        positions: Cesium.Cartesian3.fromDegreesArray(
+          r.coords.flatMap(c => [c[0], c[1]])),
+        width: 2.5,
+        material: Cesium.Color.fromCssColorString('#ffd96b').withAlpha(0.7),
+        clampToGround: true,
+      },
+    }));
+  });
+
+  // 4. Gates
+  PORT_GATES.forEach(g => {
+    zoneEntities.push(viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(g.lon, g.lat, 0),
+      point: {
+        pixelSize: 14,
+        color: Cesium.Color.fromCssColorString('#00ff9d'),
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 2,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      },
+      label: {
+        text: g.name,
+        font: '10px Inter, sans-serif',
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        pixelOffset: new Cesium.Cartesian2(0, -18),
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        showBackground: true,
+        backgroundColor: Cesium.Color.fromCssColorString('#0a0e17').withAlpha(0.7),
+        backgroundPadding: new Cesium.Cartesian2(5, 3),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      },
+    }));
+  });
+
+  console.log(`✓ Built port zones: ${zoneEntities.length} overlay entities`);
+}
+
+// ── Load all 79 berths from the GeoJSON generated by generate_berths.py ──
+// Attributes (length, draft, type, operator) come from the Port Authority PDF.
+// Coordinates are placeholder until AIS-derived or SASPlanet-traced.
+async function loadBerthsGeoJSON() {
+  try {
+    const resp = await fetch('alexandria_berths.geojson');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const fc = await resp.json();
+    const mmsiByBerth = {};   // pre-existing vessel assignments from mock
+    ALEX.vessels.forEach(v => { if (v.berth) mmsiByBerth[v.berth] = v; });
+
+    const converted = fc.features.map(feat => {
+      const p = feat.properties;
+      const ring = feat.geometry.coordinates[0];   // closed polygon
+      const coords = ring.slice(0, -1);            // drop closing point
+      const id = 'B' + p.quay_no.replace('/', '_');
+      const assigned = mmsiByBerth[id] || mmsiByBerth['B' + p.quay_no];
+      return {
+        id, name: `Berth ${p.quay_no} — ${p.type.replace('_',' ')}`,
+        status: assigned ? 'occupied' : 'free',
+        vessel: assigned ? assigned.name : null,
+        coords,
+        type: p.type, length_m: p.length_m, draft_m: p.draft_m,
+        operator: p.operator, pier: p.pier, zone: p.zone, port: p.port,
+        coordsStatus: p.coords_status,
+      };
+    });
+    ALEX.berths = converted;
+    console.log(`OK loaded ${converted.length} berths from alexandria_berths.geojson`);
+  } catch (e) {
+    console.warn('Berth GeoJSON load failed, keeping 8 hardcoded:', e.message);
+  }
+}
+
+function buildPortGraphics() {
+  loadingStatus('Building port entities...');
+
+  const berthStatusColors = {
+    free: Cesium.Color.fromCssColorString('#00ff9d').withAlpha(0.55),
+    occupied: Cesium.Color.fromCssColorString('#ef5350').withAlpha(0.65),
+    maintenance: Cesium.Color.fromCssColorString('#ffa726').withAlpha(0.55),
+  };
+
+  // Outline colour per cargo type (Singapore JP Glass style)
+  const outlineByType = {
+    container:        '#00d4ff',
+    roro:             '#ab47bc',
+    roro_general:     '#ab47bc',
+    passenger:        '#ff4081',
+    petroleum:        '#ffa726',
+    grains:           '#ffee58',
+    grain_timber:     '#ffee58',
+    livestock:        '#8bc34a',
+    molasses:         '#8d6e63',
+    coal:             '#424242',
+    mining:           '#6d4c41',
+    general_cargo:    '#00ff9d',
+    general_cargo_bulk:'#66bb6a',
+    military:         '#b71c1c',
+    maintenance:      '#90a4ae',
+  };
+
+  // Berths — extruded colour blocks (Singapore JP Glass style)
+  // Height ≈ 4m gives them visual presence without obscuring the base map.
+  ALEX.berths.forEach(b => {
+    const flat = b.coords.flatMap(c => [c[0], c[1]]);
+    const outlineColor = outlineByType[b.type] || '#00d4ff';
+    // Height varies by status (occupied berths slightly taller, more visible)
+    const extrudeH = b.status === 'occupied' ? 6 : 3;
+    const entity = viewer.entities.add({
+      id: 'berth_' + b.id,
+      name: b.name,
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray(flat),
+        material: berthStatusColors[b.status],
+        outline: true,
+        outlineColor: Cesium.Color.fromCssColorString(outlineColor),
+        outlineWidth: 2,
+        height: 0,
+        extrudedHeight: extrudeH,
+      },
+      description: `
+        <div style="font-family: Inter, sans-serif; padding: 10px; color: #e0e8f0;">
+          <h3 style="color:${outlineColor};margin-bottom:10px;">${b.name}</h3>
+          <p><b>Status:</b> ${b.status.toUpperCase()}</p>
+          <p><b>Type:</b> ${(b.type || '').replace(/_/g,' ')}</p>
+          <p><b>Length:</b> ${b.length_m || '?'} m &nbsp; <b>Draft:</b> ${b.draft_m || '?'} m</p>
+          <p><b>Operator:</b> ${b.operator || '—'}</p>
+          <p><b>Pier:</b> ${b.pier || '—'}</p>
+          <p><b>Port:</b> ${b.port || 'Alexandria'}</p>
+          <p><b>Vessel:</b> ${b.vessel || 'None'}</p>
+          ${b.coordsStatus === 'placeholder' ? '<p style="color:#ffa726;font-size:11px;"><b>⚠</b> Coords are placeholder — refine via AIS clustering or SASPlanet.</p>' : ''}
+        </div>
+      `,
+      properties: { type: 'berth', data: b },
+    });
+    berthEntities.push(entity);
+
+    // Berth ID label
+    const cLon = b.coords.reduce((a, c) => a + c[0], 0) / b.coords.length;
+    const cLat = b.coords.reduce((a, c) => a + c[1], 0) / b.coords.length;
+    const labelColor = b.status === 'occupied' ? '#ef5350' :
+                       b.status === 'free' ? '#00ff9d' : '#ffa726';
+    berthEntities.push(viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(cLon, cLat, 0),
+      label: {
+        text: b.id.replace(/^B/, ''),   // show bare quay number
+        font: 'bold 10px Inter, sans-serif',
+        fillColor: Cesium.Color.fromCssColorString(labelColor),
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 2,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        showBackground: true,
+        backgroundColor: Cesium.Color.fromCssColorString('#0a0e17').withAlpha(0.7),
+        backgroundPadding: new Cesium.Cartesian2(5, 3),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        translucencyByDistance: new Cesium.NearFarScalar(1500, 1.0, 8000, 0.0),
+      },
+    }));
+  });
+
+  // Yards — extruded blocks proportional to occupancy (container stacks)
+  // Height = 2m base + occupancy% * 10m (max ~12m = full yard)
+  ALEX.yards.forEach(y => {
+    const flat = y.coords.flatMap(c => [c[0], c[1]]);
+    const color = y.occupancy > 85 ? '#ef5350' : (y.occupancy > 65 ? '#ffa726' : '#3a7cb0');
+    const yardHeight = 2 + (y.occupancy / 100) * 10;
+    const entity = viewer.entities.add({
+      id: 'yard_' + y.id,
+      name: y.name,
+      polygon: {
+        hierarchy: Cesium.Cartesian3.fromDegreesArray(flat),
+        material: Cesium.Color.fromCssColorString(color).withAlpha(0.55),
+        outline: true,
+        outlineColor: Cesium.Color.fromCssColorString(color).withAlpha(0.95),
+        outlineWidth: 3,
+        height: 0,
+        extrudedHeight: yardHeight,
+      },
+      description: `
+        <div style="font-family: Inter, sans-serif; padding: 10px; color: #e0e8f0;">
+          <h3 style="color:#00d4ff;margin-bottom:10px;">${y.name}</h3>
+          <p><b>Occupancy:</b> ${y.occupancy}%</p>
+          <p><b>Capacity:</b> ${y.capacity.toLocaleString()} TEU</p>
+          <p><b>Current:</b> ${Math.round(y.capacity * y.occupancy / 100).toLocaleString()} TEU</p>
+        </div>
+      `,
+      properties: { type: 'yard', data: y },
+    });
+    yardEntities.push(entity);
+
+    // Yard label at centroid (JP Glass style — big floating label)
+    const cLon = y.coords.reduce((a, c) => a + c[0], 0) / y.coords.length;
+    const cLat = y.coords.reduce((a, c) => a + c[1], 0) / y.coords.length;
+    const labelColor = y.occupancy > 85 ? '#ef5350' :
+                       y.occupancy > 65 ? '#ffa726' : '#3a7cb0';
+    yardEntities.push(viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(cLon, cLat, 0),
+      label: {
+        text: `${y.name}\n${y.occupancy}% · ${y.capacity.toLocaleString()} TEU`,
+        font: 'bold 11px Inter, sans-serif',
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.fromCssColorString(labelColor),
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        showBackground: true,
+        backgroundColor: Cesium.Color.fromCssColorString('#0a0e17').withAlpha(0.85),
+        backgroundPadding: new Cesium.Cartesian2(8, 5),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        translucencyByDistance: new Cesium.NearFarScalar(1500, 1.0, 6000, 0.0),
+      },
+    }));
+  });
+
+  // Navigation channel
+  channelEntity = viewer.entities.add({
+    id: 'nav_channel',
+    name: 'Main Navigation Channel',
+    polyline: {
+      positions: Cesium.Cartesian3.fromDegreesArray(
+        ALEX.channel.flatMap(p => [p.lon, p.lat])
+      ),
+      width: 6,
+      material: new Cesium.PolylineDashMaterialProperty({
+        color: Cesium.Color.fromCssColorString('#ffa726').withAlpha(0.8),
+        dashLength: 24,
+      }),
+      clampToGround: true,
+    },
+  });
+
+  // Vessels — using billboards (ship icons) with labels and selection circles
+  const shipSvg = encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44">
+      <defs><filter id="glow"><feGaussianBlur stdDeviation="2"/></filter></defs>
+      <circle cx="22" cy="22" r="20" fill="#00d4ff" opacity="0.15"/>
+      <path d="M 22 4 L 34 20 L 34 32 L 10 32 L 10 20 Z" fill="#00d4ff" stroke="white" stroke-width="2"/>
+      <rect x="18" y="10" width="8" height="8" fill="white"/>
+    </svg>
+  `);
+  const shipIcon = 'data:image/svg+xml;charset=UTF-8,' + shipSvg;
+
+  ALEX.vessels.forEach(v => {
+    const statusColor = v.status === 'loading' ? '#ffa726' :
+                        v.status === 'docked' ? '#00ff9d' :
+                        v.status === 'approaching' ? '#00d4ff' :
+                        v.status === 'anchored' ? '#ab47bc' : '#ffffff';
+
+    const entity = viewer.entities.add({
+      id: 'vessel_' + v.mmsi,
+      name: v.name,
+      position: Cesium.Cartesian3.fromDegrees(v.lon, v.lat, 0),
+      billboard: {
+        image: shipIcon,
+        scale: 1.0,
+        verticalOrigin: Cesium.VerticalOrigin.CENTER,
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        color: Cesium.Color.fromCssColorString(statusColor),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      },
+      label: {
+        text: v.name,
+        font: 'bold 12px Inter, sans-serif',
+        fillColor: Cesium.Color.WHITE,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -30),
+        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+        scale: 0.9,
+        showBackground: true,
+        backgroundColor: Cesium.Color.fromCssColorString('#0a0e17').withAlpha(0.75),
+        backgroundPadding: new Cesium.Cartesian2(6, 4),
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
+      },
+      ellipse: {
+        semiMinorAxis: 60,
+        semiMajorAxis: 60,
+        material: Cesium.Color.fromCssColorString(statusColor).withAlpha(0.15),
+        outline: true,
+        outlineColor: Cesium.Color.fromCssColorString(statusColor).withAlpha(0.5),
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+      },
+      properties: { type: 'vessel', data: v },
+    });
+    vesselEntities.push(entity);
+  });
+
+  console.log(`✓ Built: ${berthEntities.length} berths, ${yardEntities.length} yards, ${vesselEntities.length} vessels`);
+}
+
+// ============================================================
+// CLICK HANDLER
+// ============================================================
+viewer.screenSpaceEventHandler.setInputAction((click) => {
+  const picked = viewer.scene.pick(click.position);
+  if (picked && picked.id && picked.id.properties) {
+    const type = picked.id.properties.type?.getValue();
+    const data = picked.id.properties.data?.getValue();
+    if (type === 'vessel' && data) {
+      showVesselCard(data);
+    }
+  }
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+function showVesselCard(v) {
+  _currentVessel = v;
+  document.getElementById('vc-name').textContent = v.name;
+  document.getElementById('vc-mmsi').textContent = v.mmsi;
+  document.getElementById('vc-voyage').textContent = v.voyage;
+  document.getElementById('vc-type').textContent = v.type;
+  document.getElementById('vc-length').textContent = v.length + ' m';
+  document.getElementById('vc-cargo').textContent = v.cargo;
+  document.getElementById('vc-etb').textContent = v.etb;
+  document.getElementById('vc-agent').textContent = v.agent;
+  const statusEl = document.getElementById('vc-status');
+  statusEl.textContent = v.status;
+  statusEl.className = 'status-badge ' + v.status;
+  document.getElementById('vessel-card').style.display = 'block';
+}
+function closeVesselCard() {
+  document.getElementById('vessel-card').style.display = 'none';
+}
+
+// Open AI bin-packer for the currently displayed vessel
+let _currentVessel = null;
+function openLoadPlanner() {
+  if (!_currentVessel) return;
+  const v = _currentVessel;
+  const params = new URLSearchParams({
+    mmsi:   v.mmsi || '',
+    name:   v.name || '',
+    length: v.length || '',
+    cargo:  v.cargo || '',
+  });
+  // bin-packing-simulator.html lives one directory up
+  window.open('../bin-packing-simulator.html?' + params.toString(),
+              'alex_bin_packer', 'width=1400,height=900');
+}
+
+// ============================================================
+// LAYER TOGGLE
+// ============================================================
+document.querySelectorAll('.layer-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const layer = item.dataset.layer;
+    const toggle = item.querySelector('.toggle');
+    const active = toggle.classList.toggle('active');
+    toggleLayer(layer, active);
+  });
+});
+function toggleLayer(layer, visible) {
+  if (layer === 'zones') {
+    zoneEntities.forEach(e => e.show = visible);
+  } else if (layer === 'buildings') {
+    if (osmBuildingsTileset) osmBuildingsTileset.show = visible;
+  } else if (layer === 'cranes') {
+    craneEntities.forEach(e => e.show = visible);
+  } else if (layer === 'vessels') {
+    vesselEntities.forEach(e => e.show = visible);
+  } else if (layer === 'berths') {
+    berthEntities.forEach(e => e.show = visible);
+  } else if (layer === 'yards') {
+    yardEntities.forEach(e => e.show = visible);
+  } else if (layer === 'channels') {
+    if (channelEntity) channelEntity.show = visible;
+  }
+}
+
+// ============================================================
+// 2D / 3D TOGGLE
+// ============================================================
+let is3D = true;
+function toggleView() {
+  is3D = !is3D;
+  const btn = document.getElementById('view-mode');
+  if (is3D) {
+    viewer.scene.morphTo3D(1.5);
+    btn.textContent = '3D';
+  } else {
+    viewer.scene.morphTo2D(1.5);
+    btn.textContent = '2D';
+  }
+}
+
+// ============================================================
+// VESSEL ANIMATION
+// ============================================================
+const approachingVessels = ALEX.vessels.filter(v => v.status === 'approaching');
+setInterval(() => {
+  approachingVessels.forEach(v => {
+    const entity = viewer.entities.getById('vessel_' + v.mmsi);
+    if (entity) {
+      v.lon += (29.8700 - v.lon) * 0.0008;
+      v.lat += (31.1870 - v.lat) * 0.0008;
+      entity.position = Cesium.Cartesian3.fromDegrees(v.lon, v.lat, 0);
+    }
+  });
+}, 100);
+
+// ============================================================
+// CLOCK
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    String(now.getHours()).padStart(2, '0') + ':' +
+    String(now.getMinutes()).padStart(2, '0') + ':' +
+    String(now.getSeconds()).padStart(2, '0');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============================================================
+// BACKEND WEBSOCKET CONNECTION (stub — will connect when backend is live)
+// ============================================================
+const BACKEND_URL = 'ws://localhost:8008/ws';
+let ws = null;
+let reconnectAttempt = 0;
+
+function setConnectionStatus(state, text) {
+  document.getElementById('conn-dot').className = 'conn-dot ' + state;
+  document.getElementById('conn-text').textContent = text;
+}
+
+function connectBackend() {
+  setConnectionStatus('connecting', 'BACKEND: CONNECTING...');
+  try {
+    ws = new WebSocket(BACKEND_URL);
+    ws.onopen = () => {
+      setConnectionStatus('connected', 'BACKEND: CONNECTED');
+      reconnectAttempt = 0;
+      console.log('✓ Connected to backend');
+      ws.send(JSON.stringify({ action: 'subscribe', channels: ['vessels', 'berths', 'kpis'] }));
+    };
+    ws.onmessage = (event) => {
+      try { handleBackendEvent(JSON.parse(event.data)); }
+      catch (e) { console.warn('Bad event:', e); }
+    };
+    // Silent error — we don't want the console spam. The onclose handler
+    // already reports the state visibly in the bottom-right indicator.
+    ws.onerror = (e) => { e.preventDefault?.(); };
+    ws.onclose = () => {
+      reconnectAttempt++;
+      if (reconnectAttempt < 2) {
+        // one quick retry, then give up quietly
+        setConnectionStatus('connecting', 'BACKEND: RETRYING...');
+        setTimeout(connectBackend, 2000);
+      } else {
+        setConnectionStatus('disconnected',
+          'BACKEND: OFFLINE (start mock_backend_server.py for live data)');
+      }
+    };
+  } catch (e) {
+    setConnectionStatus('disconnected', 'BACKEND: UNAVAILABLE');
+  }
+}
+
+function handleBackendEvent(event) {
+  switch (event.event_type) {
+    case 'VESSEL_POSITION':
+      updateVesselPosition(event.entity_id, event.position);
+      break;
+    case 'VESSEL_ARRIVE':
+      addNewVessel(event.details);
+      break;
+    case 'BERTH_STATUS_CHANGED':
+      updateBerthStatus(event.entity_id, event.details.status);
+      break;
+    case 'KPI_UPDATE':
+      updateKPIs(event.details);
+      break;
+  }
+}
+
+function updateVesselPosition(mmsi, pos) {
+  const entity = viewer.entities.getById('vessel_' + mmsi);
+  if (entity) {
+    entity.position = Cesium.Cartesian3.fromDegrees(pos.longitude, pos.latitude, 0);
+  }
+}
+
+function updateBerthStatus(berthId, status) {
+  const entity = viewer.entities.getById('berth_' + berthId);
+  if (entity) {
+    const colors = { free: '#00ff9d', occupied: '#ef5350', maintenance: '#ffa726' };
+    entity.polygon.material = Cesium.Color.fromCssColorString(colors[status] || '#808080').withAlpha(0.6);
+  }
+}
+
+function updateKPIs(data) {
+  if (data.vessels !== undefined) document.getElementById('kpi-vessels').textContent = data.vessels;
+}
+
+// ============================================================
+// BOOT SEQUENCE
+// ============================================================
+(async function boot() {
+  loadingStatus('Loading 3D globe...');
+  await new Promise(r => setTimeout(r, 400));
+
+  // Google Photorealistic 3D Tiles don't cover Alexandria — skip them.
+  // City context: OSM 3D Buildings. Port district: flat Singapore JP Glass-
+  // style operational overlay (boundaries, terminal zones, roads, gates).
+  await loadOSMBuildings();
+  if (osmBuildingsTileset) osmBuildingsTileset.show = false; // start subtle
+
+  // Load all 79 berths from the authoritative Port Authority PDF-derived GeoJSON
+  await loadBerthsGeoJSON();
+
+  // Build port entities
+  buildPortZones();        // outer boundary + terminal zones + roads + gates
+  buildPortGraphics();     // berths + yards + vessels + channel
+  buildCranes();           // STS cranes (optional — toggleable)
+  craneEntities.forEach(e => e.show = false); // hidden by default (Singapore style)
+
+  // Try to connect backend (non-blocking)
+  setTimeout(connectBackend, 2000);
+
+  // Hide loading and fly to port
+  loadingStatus('Flying to Alexandria Port...');
+  await new Promise(r => setTimeout(r, 400));
+
+  document.getElementById('loading').style.opacity = '0';
+  setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 600);
+
+  viewer.camera.flyTo({ ...CAMERA.overview, duration: 3 });
+
+  console.log('✓ Alexandria Port DT ready');
+})();
+</script>
+</body>
+</html>

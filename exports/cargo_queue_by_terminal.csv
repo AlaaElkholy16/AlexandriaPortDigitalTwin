@@ -1,0 +1,6 @@
+terminal_type,queued_cargoes,total_weight_tonnes,top_cargo_types
+general_cargo,609,4626618.0,"Hot Rolled Coils × 158, Wire Rod in Coils × 125, Hot Rolled Steel Sheets in Coils × 92, Wire Rod × 75, General Cargo × 61"
+general_cargo_bulk,416,6407500.0,"Salt × 166, Calcium Carbonate × 92, Cement × 48, Calcium Chloride × 38, Gypsum × 31"
+grains,48,313000.0,"Raw Sugar × 46, Maize × 2"
+container,25,0.0,"20' Standard Container × 18, 40' Standard Container × 7, 40' High Cube Container × 3"
+coal,1,4125.0,Anthracite Coal × 1
