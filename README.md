@@ -54,19 +54,93 @@ Full interactive diagram: open `pipeline.html` in a browser after starting the s
 
 ---
 
-## Quick start
+## 🌐 Live online demo (no install needed)
 
+The dashboard is already hosted publicly on GitHub Pages — auto-refreshes every 30 min with real ShipNext data:
+
+- **Operational dashboard** → https://AlaaElkholy16.github.io/AlexandriaPortDigitalTwin/alexandria-port-2d.html
+- **Pipeline architecture** → https://AlaaElkholy16.github.io/AlexandriaPortDigitalTwin/pipeline.html
+- **Cesium 3-D fly-over** → https://AlaaElkholy16.github.io/AlexandriaPortDigitalTwin/alexandria-port-demo.html
+
+Just click and explore. No login, no install.
+
+---
+
+## 💻 Running the project locally (for contributors)
+
+### What you need
+- **Python 3.10 or newer** — download from https://www.python.org if you don't have it
+- **Git** — to clone the repo
+- Any modern browser (Chrome, Edge, Brave, Firefox)
+
+### Step 1 — Clone the repo
+Open a terminal and run:
 ```bash
-# 1. Install dependencies
-pip install pandas shapely openpyxl lightgbm ortools simpy websockets apscheduler
-
-# 2. Start the dashboard + 5-min live poll
-python start_dashboard.py --poll
-
-# 3. Open in browser
-#    → http://localhost:8000/alexandria-port-2d.html  (operational)
-#    → http://localhost:8000/pipeline.html             (architecture)
+git clone https://github.com/AlaaElkholy16/AlexandriaPortDigitalTwin.git
+cd AlexandriaPortDigitalTwin
 ```
+
+### Step 2 — Install Python dependencies
+```bash
+pip install pandas shapely openpyxl
+```
+(LightGBM, OR-Tools, SimPy are only needed later for the ML work — skip for now.)
+
+### Step 3 — Launch the dashboard
+```bash
+python start_dashboard.py --poll
+```
+
+You should see:
+```
+ ALEXANDRIA PORT DT · 2D DASHBOARD
+ ============================================================
+   Serving D:\...\AlexandriaPortDigitalTwin
+   URL: http://localhost:8000/alexandria-port-2d.html
+   Poll loop: ENABLED (5 min)
+ ============================================================
+```
+
+Your default browser opens automatically. If not, visit: **http://localhost:8000/alexandria-port-2d.html**
+
+### Step 4 — What you should see
+- A satellite view of Alexandria Port with 56 coloured berth polygons
+- ~127 live vessel dots (cyan=container, orange=bulk, red=tanker, etc.)
+- Right-side KPI panels showing real numbers (berths occupied, cargo queue, loading/unloading counts)
+- Click any vessel or berth for a detail popup
+
+### To stop
+Press `Ctrl+C` in the terminal. Both the web server and the 5-minute polling loop stop cleanly.
+
+---
+
+## 📤 Exporting data for the team
+
+Want the latest data in Excel to share in a meeting? Run:
+```bash
+python export_data.py
+```
+
+Produces:
+- `alexandria_port_data.xlsx` — 8-sheet workbook (Berths, Live Fleet, Occupancy, Planned Arrivals, Cargoes, Queue, PortWatch daily)
+- `exports/*.csv` — individual sheets as CSVs
+
+---
+
+## 🛠 Troubleshooting
+
+**"python is not recognized..."** → You need to install Python. On Windows, make sure to tick "Add Python to PATH" during install.
+
+**"Port 8000 already in use"** → Something else is running on that port. Use a different one:
+```bash
+python start_dashboard.py --poll --port 8080
+```
+
+**"Data shows mostly `-` / nothing updates"** → You probably opened the `file://...` URL instead of `http://localhost:8000/...`. Browsers block data loading from files. Use the `http://` URL.
+
+**"Module not found: shapely"** → Run `pip install shapely` again. On some Windows setups you may need: `pip install --user shapely`.
+
+---
 
 ---
 
