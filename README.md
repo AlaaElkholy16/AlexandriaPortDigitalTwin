@@ -1,4 +1,19 @@
-# Alexandria Port Digital Twin — Graduation Project 2026
+# Alexandria Port Digital Twin — Live Data & Optimisation Branch
+
+> **This branch (`feat/live-shipnext-pipeline`) complements the Three.js demo on `master`.**
+> It adds a real-data ingestion pipeline, a 2-D operational dashboard, and the novel berth-allocation model that targets the thesis contribution.
+
+## How the branches fit together
+
+| | `master` branch | **This branch (`feat/live-shipnext-pipeline`)** |
+|---|---|---|
+| Stack | Three.js + vanilla JS | Python + MapLibre + OR-Tools + LightGBM |
+| View | 3-D visualisation | 2-D operational dashboard + analytics |
+| Data | Synthetic (seed files in `js/data/`) | **Live real feeds** (ShipNext, PortWatch, Open-Meteo) |
+| Purpose | Visual demo / hero shot | Decision-support tool + ML + optimisation |
+| Novel thesis contribution | — | **Pillars 1-3** (handling-time predictor + heterogeneous BAP + cargo-readiness) |
+
+The long-term plan is to keep **both**: the 3-D scene as the thesis-defence hero visual, the 2-D pipeline as the operational core + where the research contribution lives. A later PR can wire the 3-D scene to consume the live snapshot from this branch.
 
 > **Novel data-driven berth allocation optimiser for Alexandria Port** — integrating live ShipNext AIS, APA berth specs, marine weather, and cargo-readiness dates into a single decision-support tool.
 
