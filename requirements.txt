@@ -1,0 +1,28 @@
+# Alexandria Port DT — Python dependencies
+# Install with: pip install -r requirements.txt
+
+# Core data pipeline (always needed)
+shapely>=2.0
+pandas>=2.0
+openpyxl>=3.1
+
+# Weather ingestion (Week 1)
+# (uses urllib from stdlib — no extra package needed for Open-Meteo)
+
+# ML — Pillar 1 (Week 3-4)
+lightgbm>=4.5
+optuna>=3.6
+scikit-learn>=1.4
+
+# Optimization — Pillars 2+3 (Week 5-6)
+ortools>=9.11
+
+# Simulation & validation (Week 7)
+simpy>=4.1
+
+# Real-time streaming (optional, AISStream alternative)
+websockets>=12.0
+
+# API (Week 7)
+fastapi>=0.115
+uvicorn>=0.30
