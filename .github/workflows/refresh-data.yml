@@ -1,0 +1,77 @@
+name: Refresh ShipNext live data
+
+# Re-fetches Alexandria Port live state from ShipNext every 30 min and
+# commits the fresh alexandria_live.json back to main. The public dashboard
+# on GitHub Pages then serves the updated snapshot automatically.
+#
+# This is the "no laptop needed" alternative to running
+#   python start_dashboard.py --poll
+# locally. GitHub hosts the runner, the cost is zero on a public repo.
+
+on:
+  schedule:
+    # Every 30 minutes (cron runs on GitHub time, UTC)
+    # Note: GitHub schedules are best-effort and can be delayed during high load.
+    - cron: '*/30 * * * *'
+  workflow_dispatch: {}   # allow manual trigger from the Actions tab
+
+permissions:
+  contents: write   # needed so the workflow can push the updated snapshot
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install deps
+        run: pip install shapely
+
+      - name: Run snapshot
+        run: python shipnext_ingest.py snapshot
+
+      - name: Commit if data changed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Only care about the snapshot that the dashboard reads
+          git add alexandria_live.json
+
+          if git diff --cached --quiet; then
+            echo "No changes — ShipNext returned the same snapshot as last run."
+            exit 0
+          fi
+
+          TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          git commit -m "chore(data): auto-refresh ShipNext snapshot @ ${TS}"
+          git push
+
+      - name: Summary
+        run: |
+          python - <<'PY'
+          import json
+          s = json.load(open("alexandria_live.json", encoding="utf-8"))
+          print(f"  timestamp        : {s['ts']}")
+          print(f"  vessels nearby   : {s['vessels_nearby']}")
+          print(f"  at berth         : {s['vessels_at_berth']}")
+          print(f"  at anchorage     : {s['vessels_at_anchorage']}")
+          print(f"  moored elsewhere : {s['vessels_moored_other']}")
+          print(f"  planned arrivals : {s['planned_arrivals']}")
+          print(f"  planned cargoes  : {s['planned_cargoes']}")
+          PY
