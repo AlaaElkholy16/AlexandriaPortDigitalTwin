@@ -1,5 +1,5 @@
 {
-  "ts": "2026-04-26T11:42:51.916241+00:00",
+  "ts": "2026-04-26T12:08:27.860943+00:00",
   "berths_occupied": 27,
   "berths_total": 56,
   "vessels_nearby": 150,
@@ -8,7 +8,7 @@
   "vessels_at_anchorage": 10,
   "vessels_moored_other": 96,
   "vessels_buffered": 4,
-  "planned_arrivals": 46,
+  "planned_arrivals": 47,
   "planned_cargoes": 1778,
   "cargo_queue_by_terminal": {
     "general_cargo": {
