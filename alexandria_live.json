@@ -1,5 +1,5 @@
 {
-  "ts": "2026-05-03T15:44:14.005310+00:00",
+  "ts": "2026-05-03T16:12:31.056161+00:00",
   "berths_occupied": 23,
   "berths_total": 56,
   "vessels_nearby": 136,
@@ -9,11 +9,11 @@
   "vessels_moored_other": 74,
   "vessels_buffered": 2,
   "planned_arrivals": 33,
-  "planned_cargoes": 1471,
+  "planned_cargoes": 1504,
   "cargo_queue_by_terminal": {
     "general_cargo": {
-      "count": 647,
-      "weight_t": 3455514.8,
+      "count": 680,
+      "weight_t": 3699164.8,
       "top_cargos": [
         [
           "Wire Rod in Coils",
@@ -21,11 +21,11 @@
         ],
         [
           "Hot Rolled Coils",
-          80
+          102
         ],
         [
           "Wire Rod",
-          75
+          86
         ],
         [
           "General Cargo",
