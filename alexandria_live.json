@@ -1,5 +1,5 @@
 {
-  "ts": "2026-05-02T23:43:38.177923+00:00",
+  "ts": "2026-05-03T00:12:55.440320+00:00",
   "berths_occupied": 26,
   "berths_total": 56,
   "vessels_nearby": 136,
@@ -8,24 +8,24 @@
   "vessels_at_anchorage": 6,
   "vessels_moored_other": 94,
   "vessels_buffered": 4,
-  "planned_arrivals": 38,
-  "planned_cargoes": 1573,
+  "planned_arrivals": 39,
+  "planned_cargoes": 1392,
   "cargo_queue_by_terminal": {
     "general_cargo": {
-      "count": 730,
-      "weight_t": 3244164.8,
+      "count": 568,
+      "weight_t": 2758164.8,
       "top_cargos": [
         [
           "Wire Rod in Coils",
-          415
-        ],
-        [
-          "Wire Rod",
-          69
+          261
         ],
         [
           "General Cargo",
           67
+        ],
+        [
+          "Wire Rod",
+          61
         ],
         [
           "Steel Sheets in Coils",
@@ -38,12 +38,12 @@
       ]
     },
     "general_cargo_bulk": {
-      "count": 566,
-      "weight_t": 11701000.0,
+      "count": 547,
+      "weight_t": 10941000.0,
       "top_cargos": [
         [
           "Salt",
-          226
+          207
         ],
         [
           "Cement",
