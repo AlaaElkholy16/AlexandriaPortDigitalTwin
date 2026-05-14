@@ -432,6 +432,35 @@ def berth_schedule():
         "schedule": clean,
     })
 
+@app.get("/api/weather")
+def weather():
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc)
+    key = now.strftime("%Y-%m-%dT%H")
+    current = WEATHER.get(key)
+    if not current:
+        keys = sorted(WEATHER.keys())
+        current = WEATHER[keys[-1]] if keys else {
+            "temp": 22, "wind_speed": 8, "wind_gust": 14,
+            "wave_height": 0.5, "swell_height": 0.3, "precip": 0,
+        }
+    sea_state = "Calm"
+    wh = current.get("wave_height", 0) or 0
+    if wh > 2.5:
+        sea_state = "Rough"
+    elif wh > 1.0:
+        sea_state = "Moderate"
+    return {
+        "temp_c": round(current["temp"], 1),
+        "wind_speed_ms": round(current["wind_speed"], 1),
+        "wind_gust_ms": round(current["wind_gust"], 1),
+        "wave_height_m": round(wh, 2),
+        "swell_height_m": round(current.get("swell_height", 0) or 0, 2),
+        "precip_mm": round(current.get("precip", 0) or 0, 1),
+        "sea_state": sea_state,
+        "description": f"{round(current['temp'])}°C, Wind {round(current['wind_speed'])} m/s",
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
