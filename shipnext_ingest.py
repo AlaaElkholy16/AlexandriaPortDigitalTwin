@@ -396,25 +396,33 @@ def poll_once(conn: sqlite3.Connection) -> dict:
 
 def update_berth_occupancy(conn: sqlite3.Connection, ts: str, occupancy: list):
     """Maintain first_seen / last_seen / dwell per (berth_id, imo)."""
-    now_keys = {(o["berth_id"], o["imo"]) for o in occupancy}
+    now_keys = {(o["berth_id"], str(o["imo"])) for o in occupancy}
     # Mark previously-current rows that are no longer present as final (is_current=0)
     cur = conn.execute("SELECT berth_id, imo, first_seen FROM berth_occupancy WHERE is_current = 1")
     for berth, imo, first in cur.fetchall():
-        if (berth, imo) not in now_keys:
+        if (berth, str(imo)) not in now_keys:
             conn.execute("""UPDATE berth_occupancy
                             SET is_current = 0,
                                 dwell_minutes = (julianday(last_seen) - julianday(first_seen)) * 1440
                             WHERE berth_id = ? AND imo = ? AND first_seen = ?""",
                          (berth, imo, first))
-    # Upsert currents
+    # Upsert currents: check if vessel already tracked at this berth
     for o in occupancy:
-        conn.execute("""
-            INSERT INTO berth_occupancy (berth_id, imo, name, vtype, first_seen, last_seen, dwell_minutes, is_current)
-            VALUES (?,?,?,?,?,?,0,1)
-            ON CONFLICT(berth_id, imo, first_seen) DO UPDATE SET
-                last_seen = ?,
-                dwell_minutes = (julianday(?) - julianday(first_seen)) * 1440
-        """, (o["berth_id"], o["imo"], o["name"], o["vtype"], ts, ts, ts, ts))
+        key = (o["berth_id"], str(o["imo"]))
+        existing = conn.execute(
+            "SELECT first_seen FROM berth_occupancy WHERE berth_id=? AND CAST(imo AS TEXT)=? AND is_current=1",
+            key).fetchone()
+        if existing:
+            conn.execute("""UPDATE berth_occupancy
+                            SET last_seen = ?,
+                                dwell_minutes = (julianday(?) - julianday(first_seen)) * 1440
+                            WHERE berth_id = ? AND CAST(imo AS TEXT) = ? AND is_current = 1""",
+                         (ts, ts, o["berth_id"], str(o["imo"])))
+        else:
+            conn.execute("""INSERT INTO berth_occupancy
+                            (berth_id, imo, name, vtype, first_seen, last_seen, dwell_minutes, is_current)
+                            VALUES (?,?,?,?,?,?,0,1)""",
+                         (o["berth_id"], o["imo"], o["name"], o["vtype"], ts, ts))
     conn.commit()
 
 

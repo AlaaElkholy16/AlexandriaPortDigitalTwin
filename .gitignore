@@ -14,7 +14,7 @@ venv/
 env/
 
 # ── Large binary data (committed JSON/CSV is fine) ───────
-*.db
+shipnext.db
 *.sqlite
 *.sqlite3
 
