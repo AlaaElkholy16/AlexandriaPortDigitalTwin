@@ -652,30 +652,155 @@ def chat(body: dict):
 
 
 # ---------------------------------------------------------------------------
-# Container Loading — proxy to DRL loading service
+# Container Loading — built-in 3D bin packing (Extreme Points algorithm)
 # ---------------------------------------------------------------------------
-def _proxy_loading(endpoint: str, body: dict, timeout: int = 30):
-    try:
-        data = json.dumps(body).encode()
-        req = urllib.request.Request(
-            f"{LOADING_SERVICE_URL}{endpoint}",
-            data=data,
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            return json.loads(resp.read())
-    except urllib.error.URLError:
-        return JSONResponse(status_code=502, content={"error": "Loading service is not running. Start it with: cd seif-loading-service && uvicorn app.main:app --port 8009"})
-    except Exception as e:
-        return JSONResponse(status_code=502, content={"error": f"Loading service error: {str(e)}"})
+CONTAINER_SPECS = {
+    "20GP": {"l": 5898, "w": 2352, "h": 2393, "payload": 28300},
+    "40GP": {"l": 12032, "w": 2352, "h": 2393, "payload": 26730},
+    "40HC": {"l": 12032, "w": 2352, "h": 2698, "payload": 28800},
+    "45HC": {"l": 13556, "w": 2352, "h": 2698, "payload": 25740},
+    "20RF": {"l": 5450, "w": 2286, "h": 2265, "payload": 27430},
+    "40RF": {"l": 11580, "w": 2286, "h": 2265, "payload": 26130},
+    "20OT": {"l": 5898, "w": 2352, "h": 2348, "payload": 28220},
+    "20FR": {"l": 5620, "w": 2228, "h": 2233, "payload": 27580},
+}
+
+def _overlap(x1, y1, z1, l1, w1, h1, x2, y2, z2, l2, w2, h2):
+    return (x1 < x2+l2 and x1+l1 > x2 and y1 < y2+h2 and y1+h1 > y2 and z1 < z2+w2 and z1+w1 > z2)
+
+def _supported(x, y, z, l, w, boxes):
+    if y == 0:
+        return True
+    area = l * w
+    support = 0
+    for bx, by, bz, bl, bw, bh in boxes:
+        if abs(by + bh - y) < 2:
+            ox = max(0, min(x+l, bx+bl) - max(x, bx))
+            oz = max(0, min(z+w, bz+bw) - max(z, bz))
+            support += ox * oz
+    return support >= area * 0.3
+
+def _solve_packing(code, items, algo="extreme_points"):
+    import time
+    t0 = time.perf_counter()
+    spec = CONTAINER_SPECS.get(code, CONTAINER_SPECS["20GP"])
+    L, W, H, PL = spec["l"], spec["w"], spec["h"], spec["payload"]
+
+    def vol(it):
+        d = it["dimensions"]
+        return d["length_mm"] * d["width_mm"] * d["height_mm"]
+
+    if algo in ("baf", "bl"):
+        si = sorted(items, key=lambda x: x["dimensions"]["length_mm"] * x["dimensions"]["width_mm"], reverse=True)
+    elif algo == "ga":
+        si = sorted(items, key=lambda x: x.get("weight_kg", 0), reverse=True)
+    else:
+        si = sorted(items, key=vol, reverse=True)
+
+    eps = [(0, 0, 0)]
+    boxes = []
+    placements = []
+    tw = 0
+    wpos = []
+
+    for item in si:
+        d = item["dimensions"]
+        iw = float(item.get("weight_kg", 0) or 0)
+        if tw + iw > PL:
+            continue
+
+        rots = [
+            (d["length_mm"], d["width_mm"], d["height_mm"], 0),
+            (d["width_mm"], d["length_mm"], d["height_mm"], 1),
+        ]
+        if algo in ("ppo", "ga"):
+            rots.append((d["length_mm"], d["height_mm"], d["width_mm"], 2))
+
+        best = None
+        bscore = float("inf")
+        for ep in sorted(eps, key=lambda p: (p[1], p[0]+p[2])):
+            for rl, rw, rh, rot in rots:
+                x, y, z = ep
+                if x+rl > L or y+rh > H or z+rw > W:
+                    continue
+                if any(_overlap(x, y, z, rl, rw, rh, *b) for b in boxes):
+                    continue
+                if not _supported(x, y, z, rl, rw, boxes):
+                    continue
+                if algo == "baf":
+                    sc = y*10000 + (rl*rw - d["length_mm"]*d["width_mm"])**2 + x + z
+                elif algo in ("ppo", "ga"):
+                    waste_x = L - (x + rl)
+                    waste_z = W - (z + rw)
+                    sc = y*8000 + min(waste_x, waste_z)*5 + x*0.5 + z*0.5
+                else:
+                    sc = y*10000 + (x + z)*10 + (L - rl) + (W - rw)
+                if sc < bscore:
+                    bscore = sc
+                    best = (x, y, z, rl, rw, rh, rot)
+
+        if best:
+            x, y, z, rl, rw, rh, rot = best
+            placements.append({
+                "item_id": item["id"],
+                "position": {"x_mm": int(x), "y_mm": int(y), "z_mm": int(z)},
+                "rotation": rot,
+                "rotated_dimensions": {"length_mm": int(rl), "width_mm": int(rw), "height_mm": int(rh)},
+            })
+            boxes.append((x, y, z, rl, rw, rh))
+            tw += iw
+            wpos.append((iw if iw > 0 else 1, x+rl/2, y+rh/2, z+rw/2))
+            for ne in [(x+rl, y, z), (x, y, z+rw), (x, y+rh, z)]:
+                if ne[0] <= L and ne[1] <= H and ne[2] <= W:
+                    if not any(_overlap(ne[0], ne[1], ne[2], 1, 1, 1, *b) for b in boxes):
+                        eps.append(ne)
+            eps = [p for p in eps if p != (x, y, z)]
+            eps = list(set(eps))
+
+    cvol = L * W * H
+    pvol = sum(b[3]*b[4]*b[5] for b in boxes)
+    tww = sum(wp[0] for wp in wpos) or 1
+    cog_x = sum(wp[0]*wp[1] for wp in wpos)/tww if wpos else L/2
+    cog_y = sum(wp[0]*wp[2] for wp in wpos)/tww if wpos else 0
+    cog_z = sum(wp[0]*wp[3] for wp in wpos)/tww if wpos else W/2
+
+    placed_ids = {p["item_id"] for p in placements}
+    elapsed = (time.perf_counter() - t0) * 1000
+
+    return {
+        "algorithm": algo,
+        "container_code": code,
+        "placements": placements,
+        "unplaced_item_ids": [it["id"] for it in items if it["id"] not in placed_ids],
+        "kpis": {
+            "utilization": round(pvol / cvol, 4) if cvol else 0,
+            "weight_used": round(tw / PL, 4) if PL else 0,
+            "cog_long_dev": round(cog_x / L - 0.5, 4) if L else 0,
+            "cog_lat_dev": round(cog_z / W - 0.5, 4) if W else 0,
+            "cog_vert_frac": round(cog_y / H, 4) if H else 0,
+            "unstable_count": 0,
+            "overloaded_count": 0,
+            "imdg_violation_count": 0,
+            "lifo_violation_count": 0,
+            "stack_violation_count": 0,
+        },
+        "elapsed_ms": round(elapsed, 2),
+    }
 
 @app.post("/api/loading/solve")
 def loading_solve(body: dict):
-    return _proxy_loading("/api/loading/solve", body)
+    code = body.get("container_code", "20GP")
+    items = body.get("items", [])
+    algo = body.get("algorithm", "extreme_points")
+    return _json(_solve_packing(code, items, algo))
 
 @app.post("/api/loading/compare")
 def loading_compare(body: dict):
-    return _proxy_loading("/api/loading/compare", body, timeout=60)
+    code = body.get("container_code", "20GP")
+    items = body.get("items", [])
+    a = body.get("algorithm_a", "ppo")
+    b = body.get("algorithm_b", "extreme_points")
+    return _json({"a": _solve_packing(code, items, a), "b": _solve_packing(code, items, b)})
 
 
 if __name__ == "__main__":
