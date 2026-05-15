@@ -1,5 +1,6 @@
 """FastAPI server for Alexandria Port Digital Twin."""
 import json, pickle, sqlite3, os
+import urllib.request, urllib.error
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -20,6 +21,7 @@ def _json(data):
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 MODELS = os.path.join(BASE, "models")
+LOADING_SERVICE_URL = os.environ.get("LOADING_SERVICE_URL", "http://localhost:8009")
 
 app = FastAPI(title="Alexandria Port API")
 
@@ -634,7 +636,7 @@ def chat(body: dict):
         return {"reply": "Anomaly detection model is active. No anomalies file found at this time."}
 
     if any(k in msg for k in ["model", "ai ", "machine learning", "ml ", "predict", "algorithm", "accuracy"]):
-        return {"reply": "Alexandria Port uses 4 AI/ML models:\n\n1️⃣ **Dwell Time Prediction** (LightGBM)\n   MAE: 3.92h | R²: 0.776 | 89.84% within 10h\n\n2️⃣ **Berth Allocation** (OR-Tools CP-SAT)\n   Optimal solver | Avg wait: 4.59h\n\n3️⃣ **Wait Time Prediction** (LightGBM)\n   MAE: 9.94h | Median error: 2.90h\n\n4️⃣ **Anomaly Detection** (Isolation Forest)\n   40 anomalies detected | 200 estimators\n\n5️⃣ **Container Loading** (Best-Fit Decreasing)\n   Frontend bin-packing optimizer"}
+        return {"reply": "Alexandria Port uses 4 AI/ML models:\n\n1️⃣ **Dwell Time Prediction** (LightGBM)\n   MAE: 3.92h | R²: 0.776 | 89.84% within 10h\n\n2️⃣ **Berth Allocation** (OR-Tools CP-SAT)\n   Optimal solver | Avg wait: 4.59h\n\n3️⃣ **Wait Time Prediction** (LightGBM)\n   MAE: 9.94h | Median error: 2.90h\n\n4️⃣ **Anomaly Detection** (Isolation Forest)\n   40 anomalies detected | 200 estimators\n\n5️⃣ **Container Loading** (DRL + Extreme Points)\n   PCT model with GAT+PPO, ~65-67% utilization"}
 
     if any(k in msg for k in ["help", "what can you", "what do you", "feature", "can you"]):
         return {"reply": "I can help you with:\n• 🚢 Vessel information — ask about any ship by name\n• ⚓ Berth status — availability, terminals, utilization\n• 🌊 Weather conditions — wind, waves, temperature\n• 📊 Port statistics — vessel counts, capacity, traffic\n• 🤖 AI models — predictions, schedules, anomalies\n• 📋 Berth schedule — OR-Tools optimized assignments\n• ⏳ Anchorage queue — waiting vessels\n\nTry: \"How many ships are in port?\" or \"What's the weather?\""}
@@ -647,6 +649,33 @@ def chat(body: dict):
 
     # Default
     return {"reply": f"I'm not sure I understand that question. Here's a quick overview:\n\n• {berths_occupied_count} vessels at berth, {at_anchorage} at anchorage\n• Port utilization: {utilization}%\n• Weather: {round(w['temp'], 1)}°C, {sea_state} seas\n\nTry asking about: weather, vessels, berths, schedule, AI models, or a specific ship name."}
+
+
+# ---------------------------------------------------------------------------
+# Container Loading — proxy to DRL loading service
+# ---------------------------------------------------------------------------
+def _proxy_loading(endpoint: str, body: dict, timeout: int = 30):
+    try:
+        data = json.dumps(body).encode()
+        req = urllib.request.Request(
+            f"{LOADING_SERVICE_URL}{endpoint}",
+            data=data,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read())
+    except urllib.error.URLError:
+        return JSONResponse(status_code=502, content={"error": "Loading service is not running. Start it with: cd seif-loading-service && uvicorn app.main:app --port 8009"})
+    except Exception as e:
+        return JSONResponse(status_code=502, content={"error": f"Loading service error: {str(e)}"})
+
+@app.post("/api/loading/solve")
+def loading_solve(body: dict):
+    return _proxy_loading("/api/loading/solve", body)
+
+@app.post("/api/loading/compare")
+def loading_compare(body: dict):
+    return _proxy_loading("/api/loading/compare", body, timeout=60)
 
 
 if __name__ == "__main__":
