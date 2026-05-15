@@ -1,22 +1,15 @@
-name: Refresh ShipNext live data
-
-# Re-fetches Alexandria Port live state from ShipNext every 30 min and
-# commits the fresh alexandria_live.json back to main. The public dashboard
-# on GitHub Pages then serves the updated snapshot automatically.
-#
-# This is the "no laptop needed" alternative to running
-#   python start_dashboard.py --poll
-# locally. GitHub hosts the runner, the cost is zero on a public repo.
+name: Refresh port data
 
 on:
   schedule:
-    # Every 30 minutes (cron runs on GitHub time, UTC)
-    # Note: GitHub schedules are best-effort and can be delayed during high load.
+    # Every 30 minutes — ShipNext live snapshot + DB
     - cron: '*/30 * * * *'
+    # Daily at 06:00 UTC — PortWatch daily stats (IMF data lags ~7 days)
+    - cron: '0 6 * * *'
   workflow_dispatch: {}   # allow manual trigger from the Actions tab
 
 permissions:
-  contents: write   # needed so the workflow can push the updated snapshot
+  contents: write
 
 concurrency:
   group: refresh-data
@@ -25,10 +18,12 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,12 +31,16 @@ jobs:
           python-version: '3.11'
 
       - name: Install deps
-        run: pip install shapely
+        run: pip install shapely requests
 
-      - name: Run snapshot
+      - name: Run ShipNext snapshot
         run: python shipnext_ingest.py snapshot
 
-      - name: Commit if data changed
+      - name: Run PortWatch ingestion (daily or manual only)
+        if: github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch'
+        run: python portwatch_ingest.py
+
+      - name: Commit data changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -49,23 +48,31 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Only care about the snapshot that the dashboard reads
+          # Always stage the live JSON snapshot
           git add alexandria_live.json
 
+          # Stage databases only on daily/manual runs to avoid repo bloat
+          # shipnext.db is ~62 MB — committing 48x/day would balloon the repo
+          if [ "${{ github.event.schedule }}" = "0 6 * * *" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            git add shipnext.db
+            git add portwatch.db 2>/dev/null || true
+          fi
+
           if git diff --cached --quiet; then
-            echo "No changes — ShipNext returned the same snapshot as last run."
+            echo "No changes — data unchanged since last run."
             exit 0
           fi
 
           TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          git commit -m "chore(data): auto-refresh ShipNext snapshot @ ${TS}"
+          git commit -m "chore(data): auto-refresh port data @ ${TS}"
           git push
 
       - name: Summary
         run: |
           python - <<'PY'
-          import json
+          import json, os
           s = json.load(open("alexandria_live.json", encoding="utf-8"))
+          print("=== ShipNext Snapshot ===")
           print(f"  timestamp        : {s['ts']}")
           print(f"  vessels nearby   : {s['vessels_nearby']}")
           print(f"  at berth         : {s['vessels_at_berth']}")
@@ -73,4 +80,12 @@ jobs:
           print(f"  moored elsewhere : {s['vessels_moored_other']}")
           print(f"  planned arrivals : {s['planned_arrivals']}")
           print(f"  planned cargoes  : {s['planned_cargoes']}")
+          print()
+
+          db_size = os.path.getsize("shipnext.db") / (1024*1024)
+          print(f"  shipnext.db size : {db_size:.1f} MB")
+
+          if os.path.exists("portwatch.db"):
+              pw_size = os.path.getsize("portwatch.db") / 1024
+              print(f"  portwatch.db size: {pw_size:.0f} KB")
           PY
