@@ -380,28 +380,60 @@ def anomaly_check():
 
 @app.get("/api/daily-stats")
 def daily_stats(start: str = "2025-01-01", end: str = "2026-12-31"):
-    db_path = os.path.join(BASE, "portwatch.db")
-    if not os.path.exists(db_path):
-        return []
-    conn = sqlite3.connect(db_path)
-    df = pd.read_sql_query(
-        "SELECT * FROM port_daily_stats WHERE portname='Alexandria' AND date BETWEEN ? AND ? ORDER BY date",
-        conn, params=(start, end),
-    )
-    conn.close()
     records = []
-    for _, r in df.iterrows():
-        records.append({
-            "date": r["date"],
-            "portcalls": int(r["portcalls"]),
-            "import_tonnes": int(r["import"]),
-            "export_tonnes": int(r["export"]),
-            "portcalls_container": int(r.get("portcalls_container", 0)),
-            "portcalls_dry_bulk": int(r.get("portcalls_dry_bulk", 0)),
-            "portcalls_general_cargo": int(r.get("portcalls_general_cargo", 0)),
-            "portcalls_roro": int(r.get("portcalls_roro", 0)),
-            "portcalls_tanker": int(r.get("portcalls_tanker", 0)),
-        })
+    pw_last_date = None
+
+    db_path = os.path.join(BASE, "portwatch.db")
+    if os.path.exists(db_path):
+        conn = sqlite3.connect(db_path)
+        df = pd.read_sql_query(
+            "SELECT * FROM port_daily_stats WHERE portname='Alexandria' AND date BETWEEN ? AND ? ORDER BY date",
+            conn, params=(start, end),
+        )
+        conn.close()
+        for _, r in df.iterrows():
+            records.append({
+                "date": r["date"],
+                "portcalls": int(r["portcalls"]),
+                "import_tonnes": int(r["import"]),
+                "export_tonnes": int(r["export"]),
+                "portcalls_container": int(r.get("portcalls_container", 0)),
+                "portcalls_dry_bulk": int(r.get("portcalls_dry_bulk", 0)),
+                "portcalls_general_cargo": int(r.get("portcalls_general_cargo", 0)),
+                "portcalls_roro": int(r.get("portcalls_roro", 0)),
+                "portcalls_tanker": int(r.get("portcalls_tanker", 0)),
+            })
+        if records:
+            pw_last_date = records[-1]["date"]
+
+    sn_path = os.path.join(BASE, "shipnext.db")
+    if os.path.exists(sn_path) and pw_last_date:
+        conn = sqlite3.connect(sn_path)
+        sn_rows = conn.execute(
+            """SELECT date(first_seen) as d, COUNT(DISTINCT imo) as calls
+               FROM berth_occupancy
+               WHERE date(first_seen) > ?
+               GROUP BY d ORDER BY d""",
+            (pw_last_date,),
+        ).fetchall()
+        conn.close()
+        today = datetime.now().strftime("%Y-%m-%d")
+        for d, calls in sn_rows:
+            if d >= today:
+                continue
+            records.append({
+                "date": d,
+                "portcalls": calls,
+                "import_tonnes": 0,
+                "export_tonnes": 0,
+                "portcalls_container": 0,
+                "portcalls_dry_bulk": 0,
+                "portcalls_general_cargo": 0,
+                "portcalls_roro": 0,
+                "portcalls_tanker": 0,
+                "source": "shipnext",
+            })
+
     return records
 
 @app.get("/api/berth-schedule")
