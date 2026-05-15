@@ -410,29 +410,30 @@ def daily_stats(start: str = "2025-01-01", end: str = "2026-12-31"):
     if os.path.exists(sn_path) and pw_last_date:
         conn = sqlite3.connect(sn_path)
         sn_rows = conn.execute(
-            """SELECT date(first_seen) as d, COUNT(DISTINCT imo) as calls
+            """SELECT date(first_seen) as d, vtype, COUNT(DISTINCT imo) as cnt
                FROM berth_occupancy
                WHERE date(first_seen) > ?
-               GROUP BY d ORDER BY d""",
+               GROUP BY d, vtype ORDER BY d""",
             (pw_last_date,),
         ).fetchall()
         conn.close()
+        vtype_map = {"CONT": "container", "BULK": "dry_bulk", "MPP": "general_cargo",
+                     "CAR": "roro", "TANK": "tanker"}
         today = datetime.now().strftime("%Y-%m-%d")
-        for d, calls in sn_rows:
+        by_day: dict[str, dict] = {}
+        for d, vtype, cnt in sn_rows:
             if d >= today:
                 continue
-            records.append({
-                "date": d,
-                "portcalls": calls,
-                "import_tonnes": 0,
-                "export_tonnes": 0,
-                "portcalls_container": 0,
-                "portcalls_dry_bulk": 0,
-                "portcalls_general_cargo": 0,
-                "portcalls_roro": 0,
-                "portcalls_tanker": 0,
-                "source": "shipnext",
-            })
+            if d not in by_day:
+                by_day[d] = {"date": d, "portcalls": 0, "import_tonnes": 0, "export_tonnes": 0,
+                             "portcalls_container": 0, "portcalls_dry_bulk": 0,
+                             "portcalls_general_cargo": 0, "portcalls_roro": 0,
+                             "portcalls_tanker": 0, "source": "shipnext"}
+            by_day[d]["portcalls"] += cnt
+            key = vtype_map.get(vtype)
+            if key:
+                by_day[d][f"portcalls_{key}"] += cnt
+        records.extend(by_day[d] for d in sorted(by_day))
 
     return records
 
