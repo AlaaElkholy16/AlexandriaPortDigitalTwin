@@ -461,6 +461,194 @@ def weather():
         "description": f"{round(current['temp'])}°C, Wind {round(current['wind_speed'])} m/s",
     }
 
+@app.post("/api/chat")
+def chat(body: dict):
+    msg = (body.get("message") or "").strip().lower()
+    if not msg:
+        return {"reply": "Please ask me something about Alexandria Port!"}
+
+    live = _load_live()
+    ts = live["ts"]
+    occupied_imos = {str(o["imo"]) for o in live.get("occupancy", [])}
+    berths_occupied_count = len(occupied_imos)
+    total_berths = len(berths_df)
+    at_anchorage = 0
+    fleet_list = live.get("fleet", [])
+    for v in fleet_list:
+        imo = str(v.get("imo", ""))
+        if imo not in occupied_imos:
+            op = v.get("operation", "")
+            if op == "AT_ANCHORAGE" or (v.get("sog", 99) <= 1.5 and 31.10 <= v.get("lat", 0) <= 31.30 and 29.75 <= v.get("lon", 0) <= 29.95):
+                at_anchorage += 1
+    utilization = round(berths_occupied_count / total_berths * 100, 1) if total_berths else 0
+
+    # Weather
+    from datetime import timezone
+    now = datetime.now(timezone.utc)
+    w_key = now.strftime("%Y-%m-%dT%H")
+    w = WEATHER.get(w_key) or WEATHER.get(sorted(WEATHER.keys())[-1] if WEATHER else "", {})
+    if not w:
+        w = {"temp": 22, "wind_speed": 8, "wind_gust": 14, "wave_height": 0.5, "swell_height": 0.3, "precip": 0}
+    wh = w.get("wave_height", 0) or 0
+    sea_state = "Rough" if wh > 2.5 else ("Moderate" if wh > 1.0 else "Calm")
+
+    # Intent matching
+    if any(k in msg for k in ["hello", "hi ", "hey", "greet", "good morning", "good evening", "مرحبا"]):
+        return {"reply": f"Hello! I'm Captain Alex, your Alexandria Port assistant. We currently have {berths_occupied_count} vessels at berth and {at_anchorage} at anchorage. How can I help you today?"}
+
+    if any(k in msg for k in ["weather", "temperature", "temp", "wind", "wave", "sea state", "storm", "rain", "forecast weather"]):
+        return {"reply": f"Current weather at Alexandria Port:\n• Temperature: {round(w['temp'], 1)}°C\n• Wind: {round(w['wind_speed'], 1)} m/s (gusts {round(w['wind_gust'], 1)} m/s)\n• Wave height: {round(wh, 2)} m\n• Sea state: {sea_state}\n• Precipitation: {round(w.get('precip', 0) or 0, 1)} mm\n\n{'⚠️ Rough seas — exercise caution for vessel operations.' if sea_state == 'Rough' else '✅ Conditions are favorable for port operations.' if sea_state == 'Calm' else 'ℹ️ Moderate conditions — monitor wave heights.'}"}
+
+    if any(k in msg for k in ["how many ship", "how many vessel", "vessel count", "ship count", "ships in port", "vessels in port", "fleet size", "total ship", "total vessel"]):
+        return {"reply": f"Alexandria Port currently has:\n• {berths_occupied_count} vessels at berth (out of {total_berths} berths)\n• {at_anchorage} vessels at anchorage\n• Port utilization: {utilization}%\n• Total fleet tracked: {len(fleet_list)} vessels"}
+
+    if any(k in msg for k in ["schedule", "gantt", "plan", "allocation", "assign"]):
+        pkl_path = os.path.join(MODELS, "model2", "berth_allocation_result.pkl")
+        if os.path.exists(pkl_path):
+            with open(pkl_path, "rb") as f:
+                result = pickle.load(f)
+            sched = result.get("schedule", [])
+            lines = [
+                f"Berth Allocation Schedule (OR-Tools CP-SAT):",
+                f"• Status: {result.get('status', 'Unknown')}",
+                f"• Vessels scheduled: {result.get('vessels_scheduled', len(sched))}",
+                f"• Total wait: {result.get('total_wait_h', 0)}h",
+                f"• Average wait: {round(result.get('avg_wait_h', 0), 1)}h",
+                f"\nNext 5 assignments:",
+            ]
+            for s in sched[:5]:
+                lines.append(f"• {s.get('vessel', '?')} → {s.get('berth', '?')} (wait {s.get('wait_h', 0)}h, dwell {s.get('dwell_h', 0)}h)")
+            return {"reply": "\n".join(lines)}
+        return {"reply": "No berth schedule available. Run the OR-Tools optimizer first."}
+
+    if any(k in msg for k in ["berth", "dock", "terminal", "quay"]):
+        occupied_list = [o for o in live.get("occupancy", [])]
+        terminals = {}
+        for _, b in berths_df.iterrows():
+            t = b.get("terminal", "Unknown")
+            if t not in terminals:
+                terminals[t] = {"total": 0, "occupied": 0}
+            terminals[t]["total"] += 1
+        for o in occupied_list:
+            t = berth_to_terminal.get(o["berth_id"], "Unknown")
+            if t in terminals:
+                terminals[t]["occupied"] += 1
+
+        lines = [f"Berth Status ({berths_occupied_count}/{total_berths} occupied, {utilization}% utilization):"]
+        for t, info in sorted(terminals.items()):
+            lines.append(f"• {t}: {info['occupied']}/{info['total']} berths used")
+        if any(k in msg for k in ["available", "vacant", "free", "empty"]):
+            lines.append(f"\n{total_berths - berths_occupied_count} berths are currently available.")
+        return {"reply": "\n".join(lines)}
+
+    if any(k in msg for k in ["anchorage", "waiting", "anchor", "queue"]):
+        anch_vessels = []
+        for v in fleet_list:
+            imo = str(v.get("imo", ""))
+            if imo in occupied_imos:
+                continue
+            op = v.get("operation", "")
+            if op == "AT_ANCHORAGE" or (v.get("sog", 99) <= 1.5 and 31.10 <= v.get("lat", 0) <= 31.30 and 29.75 <= v.get("lon", 0) <= 29.95):
+                anch_vessels.append(v)
+        lines = [f"{len(anch_vessels)} vessels at anchorage:"]
+        for v in anch_vessels[:8]:
+            lines.append(f"• {v.get('name', 'Unknown')} ({v.get('type', '')}, {v.get('dwt', 0):,} DWT)")
+        if len(anch_vessels) > 8:
+            lines.append(f"  ... and {len(anch_vessels) - 8} more")
+        return {"reply": "\n".join(lines)}
+
+    if any(k in msg for k in ["utilization", "capacity", "how busy", "occupancy", "how full"]):
+        return {"reply": f"Port utilization is currently {utilization}% ({berths_occupied_count} of {total_berths} berths occupied).\n\n{'The port is operating at high capacity.' if utilization > 70 else 'The port has available capacity for incoming vessels.' if utilization < 40 else 'The port is at moderate utilization.'}"}
+
+    # Find specific vessel — search fleet first, then berth schedule
+    import re
+    msg_words = set(re.findall(r'\b\w+\b', msg))
+
+    def _search_vessels(vessels, key="name"):
+        for v in vessels:
+            vname = (v.get(key) or "").lower()
+            if vname and vname in msg:
+                return v
+        for v in vessels:
+            vname = (v.get(key) or "").lower()
+            vwords = [w for w in vname.split() if len(w) >= 3]
+            if vwords and any(w in msg_words for w in vwords):
+                return v
+        return None
+
+    vessel_match = _search_vessels(fleet_list, "name")
+    if vessel_match:
+        v = vessel_match
+        imo = str(v.get("imo", ""))
+        is_berth = imo in occupied_imos
+        occ = {str(o["imo"]): o for o in live.get("occupancy", [])}
+        berth_id = occ[imo]["berth_id"] if imo in occ else None
+        location = f"at berth {berth_id}" if is_berth else "at anchorage"
+        lines = [
+            f"Vessel: {v.get('name', '')}",
+            f"• IMO: {imo}",
+            f"• Type: {v.get('type', '')}",
+            f"• DWT: {v.get('dwt', 0):,}",
+            f"• Location: {location}",
+            f"• Status: {OP_TO_STATUS.get(v.get('operation', ''), 'Unknown')}",
+        ]
+        if is_berth and berth_id:
+            dwell = _predict_dwell(v.get("type", "MPP"), v.get("dwt", 10000), berth_id, ts)
+            lines.append(f"• Predicted dwell: {dwell}h")
+        if v.get("from"):
+            lines.append(f"• From: {v['from']}")
+        return {"reply": "\n".join(lines)}
+
+    # Search berth schedule if not in live fleet
+    pkl_path = os.path.join(MODELS, "model2", "berth_allocation_result.pkl")
+    if os.path.exists(pkl_path):
+        with open(pkl_path, "rb") as f:
+            sched_result = pickle.load(f)
+        sched_list = sched_result.get("schedule", [])
+        sched_match = _search_vessels(sched_list, "vessel")
+        if sched_match:
+            s = sched_match
+            lines = [
+                f"Vessel: {s.get('vessel', '')}",
+                f"• IMO: {s.get('imo', '')}",
+                f"• Type: {s.get('type', '')}",
+                f"• DWT: {s.get('dwt', 0):,}",
+                f"• Assigned berth: {s.get('berth', '?')} ({s.get('terminal', '')})",
+                f"• Wait time: {s.get('wait_h', 0)}h",
+                f"• Dwell time: {s.get('dwell_h', 0)}h",
+                f"• Scheduled: {str(s.get('start_time', ''))[:16]} → {str(s.get('end_time', ''))[:16]}",
+                f"\n(Source: OR-Tools berth allocation schedule)",
+            ]
+            return {"reply": "\n".join(lines)}
+
+    if any(k in msg for k in ["anomal", "unusual", "disruption", "abnormal", "incident"]):
+        csv_path = os.path.join(MODELS, "model4", "anomalies.csv")
+        if os.path.exists(csv_path):
+            adf = pd.read_csv(csv_path)
+            recent = adf.tail(5)
+            lines = [f"Anomaly Detection (Isolation Forest): {len(adf)} anomalies detected from historical data."]
+            lines.append("\nMost recent anomalies:")
+            for _, r in recent.iterrows():
+                lines.append(f"• {r['date']}: {r.get('likely_event', 'Unclassified')} (score: {r.get('anomaly_score', 0):.3f})")
+            return {"reply": "\n".join(lines)}
+        return {"reply": "Anomaly detection model is active. No anomalies file found at this time."}
+
+    if any(k in msg for k in ["model", "ai ", "machine learning", "ml ", "predict", "algorithm", "accuracy"]):
+        return {"reply": "Alexandria Port uses 4 AI/ML models:\n\n1️⃣ **Dwell Time Prediction** (LightGBM)\n   MAE: 3.92h | R²: 0.776 | 89.84% within 10h\n\n2️⃣ **Berth Allocation** (OR-Tools CP-SAT)\n   Optimal solver | Avg wait: 4.59h\n\n3️⃣ **Wait Time Prediction** (LightGBM)\n   MAE: 9.94h | Median error: 2.90h\n\n4️⃣ **Anomaly Detection** (Isolation Forest)\n   40 anomalies detected | 200 estimators\n\n5️⃣ **Container Loading** (Best-Fit Decreasing)\n   Frontend bin-packing optimizer"}
+
+    if any(k in msg for k in ["help", "what can you", "what do you", "feature", "can you"]):
+        return {"reply": "I can help you with:\n• 🚢 Vessel information — ask about any ship by name\n• ⚓ Berth status — availability, terminals, utilization\n• 🌊 Weather conditions — wind, waves, temperature\n• 📊 Port statistics — vessel counts, capacity, traffic\n• 🤖 AI models — predictions, schedules, anomalies\n• 📋 Berth schedule — OR-Tools optimized assignments\n• ⏳ Anchorage queue — waiting vessels\n\nTry: \"How many ships are in port?\" or \"What's the weather?\""}
+
+    if any(k in msg for k in ["who are you", "what are you", "your name", "about you", "introduce"]):
+        return {"reply": "I'm Captain Alex, the AI assistant for Alexandria Port Digital Twin. I have real-time access to vessel tracking, berth management, weather data, and AI prediction models. Ask me anything about port operations!"}
+
+    if any(k in msg for k in ["thank", "thanks", "شكرا"]):
+        return {"reply": "You're welcome! Feel free to ask if you need anything else about port operations. Fair winds! ⚓"}
+
+    # Default
+    return {"reply": f"I'm not sure I understand that question. Here's a quick overview:\n\n• {berths_occupied_count} vessels at berth, {at_anchorage} at anchorage\n• Port utilization: {utilization}%\n• Weather: {round(w['temp'], 1)}°C, {sea_state} seas\n\nTry asking about: weather, vessels, berths, schedule, AI models, or a specific ship name."}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
