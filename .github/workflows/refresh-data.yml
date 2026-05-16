@@ -31,7 +31,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install deps
-        run: pip install shapely requests
+        run: pip install shapely requests ortools
 
       - name: Run ShipNext snapshot
         run: python shipnext_ingest.py snapshot
@@ -39,6 +39,10 @@ jobs:
       - name: Run PortWatch ingestion (daily or manual only)
         if: github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch'
         run: python portwatch_ingest.py
+
+      - name: Regenerate berth schedule (daily or manual only)
+        if: github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch'
+        run: python regenerate_schedule.py
 
       - name: Commit data changes
         env:
@@ -56,6 +60,7 @@ jobs:
           if [ "${{ github.event.schedule }}" = "0 6 * * *" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             git add shipnext.db
             git add portwatch.db 2>/dev/null || true
+            git add models/model2/berth_allocation_result.pkl
           fi
 
           if git diff --cached --quiet; then
