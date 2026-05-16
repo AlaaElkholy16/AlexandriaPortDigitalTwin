@@ -727,6 +727,8 @@ def _solve_packing(code, items, algo="extreme_points"):
         si = sorted(items, key=lambda x: x["dimensions"]["length_mm"] * x["dimensions"]["width_mm"], reverse=True)
     elif algo == "ga":
         si = sorted(items, key=lambda x: x.get("weight_kg", 0), reverse=True)
+    elif algo == "ppo":
+        si = sorted(items, key=lambda x: max(x["dimensions"]["length_mm"], x["dimensions"]["width_mm"], x["dimensions"]["height_mm"]), reverse=True)
     else:
         si = sorted(items, key=vol, reverse=True)
 
@@ -747,11 +749,22 @@ def _solve_packing(code, items, algo="extreme_points"):
             (d["width_mm"], d["length_mm"], d["height_mm"], 1),
         ]
         if algo in ("ppo", "ga"):
-            rots.append((d["length_mm"], d["height_mm"], d["width_mm"], 2))
+            rots.extend([
+                (d["length_mm"], d["height_mm"], d["width_mm"], 2),
+                (d["height_mm"], d["length_mm"], d["width_mm"], 3),
+                (d["height_mm"], d["width_mm"], d["length_mm"], 4),
+                (d["width_mm"], d["height_mm"], d["length_mm"], 5),
+            ])
 
         best = None
         bscore = float("inf")
-        for ep in sorted(eps, key=lambda p: (p[1], p[0]+p[2])):
+        if algo == "ppo":
+            ep_sorted = sorted(eps, key=lambda p: (p[0] + p[2], p[1]))
+        elif algo == "baf":
+            ep_sorted = sorted(eps, key=lambda p: (p[1], p[0] * p[2]))
+        else:
+            ep_sorted = sorted(eps, key=lambda p: (p[1], p[0] + p[2]))
+        for ep in ep_sorted:
             for rl, rw, rh, rot in rots:
                 x, y, z = ep
                 if x+rl > L or y+rh > H or z+rw > W:
@@ -762,7 +775,12 @@ def _solve_packing(code, items, algo="extreme_points"):
                     continue
                 if algo == "baf":
                     sc = y*10000 + (rl*rw - d["length_mm"]*d["width_mm"])**2 + x + z
-                elif algo in ("ppo", "ga"):
+                elif algo == "ppo":
+                    fit_x = L - (x + rl)
+                    fit_z = W - (z + rw)
+                    fit_y = H - (y + rh)
+                    sc = min(fit_x, fit_z) * 3 + y * 5000 + fit_y * 2 + (x + z)
+                elif algo == "ga":
                     waste_x = L - (x + rl)
                     waste_z = W - (z + rw)
                     sc = y*8000 + min(waste_x, waste_z)*5 + x*0.5 + z*0.5
