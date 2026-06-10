@@ -1,5 +1,5 @@
 {
-  "ts": "2026-06-09T23:55:04.767739+00:00",
+  "ts": "2026-06-10T00:24:44.565285+00:00",
   "berths_occupied": 25,
   "berths_total": 56,
   "vessels_nearby": 124,
@@ -9,15 +9,15 @@
   "vessels_moored_other": 83,
   "vessels_buffered": 5,
   "planned_arrivals": 39,
-  "planned_cargoes": 1628,
+  "planned_cargoes": 1528,
   "cargo_queue_by_terminal": {
     "general_cargo": {
-      "count": 800,
-      "weight_t": 7186320.6,
+      "count": 722,
+      "weight_t": 6810111.6,
       "top_cargos": [
         [
           "Hot Rolled Coils",
-          376
+          373
         ],
         [
           "Steel Products",
@@ -25,25 +25,25 @@
         ],
         [
           "General Cargo",
-          121
-        ],
-        [
-          "Steels (rebars, Wric, Spooled Coils, Wire Mesh",
-          43
+          90
         ],
         [
           "Steel Rebars & Wric",
           30
+        ],
+        [
+          "Wire Rod",
+          27
         ]
       ]
     },
     "general_cargo_bulk": {
-      "count": 740,
-      "weight_t": 12213500.0,
+      "count": 729,
+      "weight_t": 11953500.0,
       "top_cargos": [
         [
           "Salt",
-          581
+          578
         ],
         [
           "Road Salt",
@@ -51,7 +51,7 @@
         ],
         [
           "Rock Salt",
-          68
+          60
         ],
         [
           "Urea",
@@ -1395,6 +1395,26 @@
       "operation": "MOVING"
     },
     {
+      "imo": "9618264",
+      "name": "MSC ABIDJAN",
+      "type": "CONT",
+      "dwt": 110806,
+      "capacity": null,
+      "built": 2013,
+      "gears": null,
+      "lat": 31.1425,
+      "lon": 29.7971,
+      "sog": 0,
+      "heading": 150,
+      "from": "El Dekheila",
+      "to": "Naples",
+      "progress": 1,
+      "berth": null,
+      "match_type": "",
+      "loading_status": "laden",
+      "operation": "MOORED"
+    },
+    {
       "imo": "9986934",
       "name": "MANINA",
       "type": "BULK",
@@ -1412,26 +1432,6 @@
       "berth": null,
       "match_type": "",
       "loading_status": null,
-      "operation": "MOORED"
-    },
-    {
-      "imo": "9618264",
-      "name": "MSC ABIDJAN",
-      "type": "CONT",
-      "dwt": 110806,
-      "capacity": null,
-      "built": 2013,
-      "gears": null,
-      "lat": 31.1425,
-      "lon": 29.797,
-      "sog": 0,
-      "heading": 150,
-      "from": "El Dekheila",
-      "to": "Naples",
-      "progress": 1,
-      "berth": null,
-      "match_type": "",
-      "loading_status": "laden",
       "operation": "MOORED"
     },
     {
@@ -1482,10 +1482,10 @@
       "capacity": 45010,
       "built": 1997,
       "gears": "CR-1-80",
-      "lat": 31.1406,
+      "lat": 31.1407,
       "lon": 29.7954,
       "sog": 0,
-      "heading": 345,
+      "heading": 15,
       "from": "Gibraltar",
       "to": "Alexandria",
       "progress": 0.9949800214556719,
@@ -1523,7 +1523,7 @@
       "built": null,
       "gears": "CR-4-30",
       "lat": 31.2196,
-      "lon": 29.7801,
+      "lon": 29.7808,
       "sog": 0,
       "heading": 195,
       "from": "Taman",
@@ -1542,10 +1542,10 @@
       "capacity": 56673,
       "built": 1995,
       "gears": null,
-      "lat": 31.2128,
-      "lon": 29.7753,
+      "lat": 31.2126,
+      "lon": 29.7759,
       "sog": 0,
-      "heading": 330,
+      "heading": 15,
       "from": "Icdas Port",
       "to": "El Dekheila",
       "progress": 0.9928454191880478,
@@ -1783,9 +1783,9 @@
       "built": 1989,
       "gears": null,
       "lat": 31.2086,
-      "lon": 29.747,
-      "sog": 0,
-      "heading": 360,
+      "lon": 29.7471,
+      "sog": 0.2,
+      "heading": 0,
       "from": "Damietta",
       "to": "Alexandria",
       "progress": 0.9384483042174243,
@@ -1883,9 +1883,9 @@
       "built": 2017,
       "gears": null,
       "lat": 31.2027,
-      "lon": 29.7386,
+      "lon": 29.7387,
       "sog": 0.1,
-      "heading": 360,
+      "heading": 270,
       "from": "Mersin",
       "to": "FOR ORDERS",
       "progress": 0,
@@ -1945,7 +1945,7 @@
       "lat": 31.213,
       "lon": 29.7378,
       "sog": 0,
-      "heading": 105,
+      "heading": 255,
       "from": "Mersin",
       "to": "Alexandria",
       "progress": 0.07409221868685903,
@@ -1982,10 +1982,10 @@
       "capacity": 7570,
       "built": 1993,
       "gears": null,
-      "lat": 31.1864,
-      "lon": 29.7298,
-      "sog": 0.2,
-      "heading": 60,
+      "lat": 31.1865,
+      "lon": 29.73,
+      "sog": 0.3,
+      "heading": 270,
       "from": "Sanko",
       "to": "Alexandria",
       "progress": 0.9806139649113168,
@@ -2042,10 +2042,10 @@
       "capacity": 66416,
       "built": 2005,
       "gears": "CR-4-30",
-      "lat": 31.2211,
+      "lat": 31.221,
       "lon": 29.7327,
       "sog": 0,
-      "heading": 150,
+      "heading": 225,
       "from": "Perama",
       "to": "Alexandria",
       "progress": 0.08763725410553223,
@@ -2363,9 +2363,9 @@
       "built": 2025,
       "gears": null,
       "lat": 31.2142,
-      "lon": 29.6932,
+      "lon": 29.6933,
       "sog": 0,
-      "heading": 225,
+      "heading": 15,
       "from": "Tripoli",
       "to": "Alexandria",
       "progress": 0.9697879147816802,
@@ -2724,7 +2724,7 @@
       "gears": null,
       "lat": 31.3837,
       "lon": 30.0719,
-      "sog": 0,
+      "sog": 0.1,
       "heading": 90,
       "from": "Icdas Port",
       "to": "Abu Qir",
