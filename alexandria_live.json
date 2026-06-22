@@ -1,5 +1,5 @@
 {
-  "ts": "2026-06-21T23:54:48.010063+00:00",
+  "ts": "2026-06-22T00:24:04.372112+00:00",
   "berths_occupied": 20,
   "berths_total": 56,
   "vessels_nearby": 115,
@@ -9,7 +9,7 @@
   "vessels_moored_other": 76,
   "vessels_buffered": 5,
   "planned_arrivals": 36,
-  "planned_cargoes": 1596,
+  "planned_cargoes": 1593,
   "cargo_queue_by_terminal": {
     "general_cargo": {
       "count": 445,
@@ -38,12 +38,12 @@
       ]
     },
     "general_cargo_bulk": {
-      "count": 1032,
-      "weight_t": 11887100.0,
+      "count": 1029,
+      "weight_t": 11817100.0,
       "top_cargos": [
         [
           "Salt",
-          918
+          916
         ],
         [
           "Road Salt",
@@ -59,7 +59,7 @@
         ],
         [
           "Cement",
-          13
+          12
         ]
       ]
     },
