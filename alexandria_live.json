@@ -1,5 +1,5 @@
 {
-  "ts": "2026-06-23T06:44:53.635126+00:00",
+  "ts": "2026-06-23T07:14:59.725008+00:00",
   "berths_occupied": 22,
   "berths_total": 56,
   "vessels_nearby": 119,
@@ -1614,8 +1614,8 @@
       "capacity": null,
       "built": 2011,
       "gears": null,
-      "lat": 31.2094,
-      "lon": 29.761,
+      "lat": 31.2092,
+      "lon": 29.7611,
       "sog": 0,
       "heading": 360,
       "from": "Arzew El-Djedid",
