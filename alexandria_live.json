@@ -1,5 +1,5 @@
 {
-  "ts": "2026-07-27T06:38:13.722155+00:00",
+  "ts": "2026-07-27T07:08:07.935124+00:00",
   "berths_occupied": 17,
   "berths_total": 56,
   "vessels_nearby": 95,
@@ -8,8 +8,8 @@
   "vessels_at_anchorage": 6,
   "vessels_moored_other": 55,
   "vessels_buffered": 6,
-  "planned_arrivals": 35,
-  "planned_cargoes": 965,
+  "planned_arrivals": 33,
+  "planned_cargoes": 977,
   "cargo_queue_by_terminal": {
     "general_cargo_bulk": {
       "count": 631,
@@ -48,12 +48,12 @@
       ]
     },
     "general_cargo": {
-      "count": 180,
-      "weight_t": 2205109.0,
+      "count": 191,
+      "weight_t": 2316859.0,
       "top_cargos": [
         [
           "Steel Products",
-          65
+          67
         ],
         [
           "General Cargo",
@@ -61,7 +61,7 @@
         ],
         [
           "Hot Rolled Coils",
-          28
+          37
         ],
         [
           "Project and General Cargo",
