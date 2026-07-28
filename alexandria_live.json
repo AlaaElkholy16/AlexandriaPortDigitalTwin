@@ -1,5 +1,5 @@
 {
-  "ts": "2026-07-27T23:48:20.583325+00:00",
+  "ts": "2026-07-28T00:16:20.235092+00:00",
   "berths_occupied": 19,
   "berths_total": 56,
   "vessels_nearby": 90,
@@ -9,15 +9,15 @@
   "vessels_moored_other": 53,
   "vessels_buffered": 6,
   "planned_arrivals": 32,
-  "planned_cargoes": 1045,
+  "planned_cargoes": 963,
   "cargo_queue_by_terminal": {
     "general_cargo_bulk": {
-      "count": 654,
-      "weight_t": 7319200.0,
+      "count": 587,
+      "weight_t": 6711200.0,
       "top_cargos": [
         [
           "Salt",
-          579
+          512
         ],
         [
           "Rock Salt",
@@ -48,20 +48,20 @@
       ]
     },
     "general_cargo": {
-      "count": 202,
-      "weight_t": 2432859.0,
+      "count": 187,
+      "weight_t": 2189509.0,
       "top_cargos": [
         [
           "Steel Products",
           69
         ],
         [
-          "Hot Rolled Coils",
-          45
-        ],
-        [
           "General Cargo",
           40
+        ],
+        [
+          "Hot Rolled Coils",
+          34
         ],
         [
           "Project and General Cargo",
@@ -576,7 +576,7 @@
       "capacity": null,
       "built": 2010,
       "gears": null,
-      "lat": 31.1889,
+      "lat": 31.189,
       "lon": 29.8749,
       "sog": 0,
       "heading": 180,
@@ -876,10 +876,10 @@
       "capacity": null,
       "built": 2009,
       "gears": null,
-      "lat": 31.1943,
-      "lon": 29.8785,
+      "lat": 31.1944,
+      "lon": 29.8784,
       "sog": 0,
-      "heading": 255,
+      "heading": 120,
       "from": "Genoa",
       "to": "Alexandria",
       "progress": 0.9992562606644084,
@@ -1056,7 +1056,7 @@
       "capacity": null,
       "built": 1971,
       "gears": null,
-      "lat": 31.1686,
+      "lat": 31.1687,
       "lon": 29.8549,
       "sog": 0,
       "heading": 315,
@@ -1216,7 +1216,7 @@
       "capacity": 70868,
       "built": 2010,
       "gears": "CR-4-30",
-      "lat": 31.1407,
+      "lat": 31.1408,
       "lon": 29.7985,
       "sog": 0,
       "heading": 120,
@@ -1316,10 +1316,10 @@
       "capacity": null,
       "built": 1998,
       "gears": null,
-      "lat": 31.1388,
+      "lat": 31.1387,
       "lon": 29.7939,
       "sog": 0,
-      "heading": 45,
+      "heading": 135,
       "from": "Skikda",
       "to": "El Dekheila",
       "progress": 0.9983710038923401,
@@ -1456,10 +1456,10 @@
       "capacity": 38320,
       "built": 1995,
       "gears": "CR-3-30",
-      "lat": 31.1905,
+      "lat": 31.1906,
       "lon": 29.7631,
       "sog": 0,
-      "heading": 75,
+      "heading": 30,
       "from": "Kalecik",
       "to": "Alexandria",
       "progress": 0.975091599603618,
@@ -1649,26 +1649,6 @@
       "operation": "MOORED"
     },
     {
-      "imo": "9744661",
-      "name": "ANDREI TITOV",
-      "type": "CONT",
-      "dwt": 23477,
-      "capacity": null,
-      "built": 2016,
-      "gears": null,
-      "lat": 31.272,
-      "lon": 29.7816,
-      "sog": 0.7,
-      "heading": 105,
-      "from": "Marport West (Soyak) Terminal",
-      "to": "El Dekheila",
-      "progress": 0.9851915817244139,
-      "berth": null,
-      "match_type": "",
-      "loading_status": "laden",
-      "operation": "MOVING"
-    },
-    {
       "imo": "9235696",
       "name": "CAESAR",
       "type": "TANK",
@@ -1829,6 +1809,26 @@
       "operation": "MOORED"
     },
     {
+      "imo": "9744661",
+      "name": "ANDREI TITOV",
+      "type": "CONT",
+      "dwt": 23477,
+      "capacity": null,
+      "built": 2016,
+      "gears": null,
+      "lat": 31.3074,
+      "lon": 29.6908,
+      "sog": 0.7,
+      "heading": 75,
+      "from": "Marport West (Soyak) Terminal",
+      "to": "El Dekheila",
+      "progress": 0.9888166347474944,
+      "berth": null,
+      "match_type": "",
+      "loading_status": "laden",
+      "operation": "MOVING"
+    },
+    {
       "imo": "9933652",
       "name": "FRONT GAULA",
       "type": "TANK",
@@ -1876,13 +1876,13 @@
       "capacity": null,
       "built": 2017,
       "gears": null,
-      "lat": 31.1633,
-      "lon": 29.614,
+      "lat": 31.1632,
+      "lon": 29.6141,
       "sog": 0,
       "heading": 240,
       "from": "Perama",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9959740222660142,
+      "progress": 0.9959998837152003,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -1996,8 +1996,8 @@
       "capacity": null,
       "built": 2011,
       "gears": null,
-      "lat": 31.1124,
-      "lon": 29.5646,
+      "lat": 31.1125,
+      "lon": 29.5647,
       "sog": 0,
       "heading": 45,
       "from": "Perama",
