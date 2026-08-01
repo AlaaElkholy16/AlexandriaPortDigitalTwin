@@ -1,5 +1,5 @@
 {
-  "ts": "2026-07-31T23:46:57.879658+00:00",
+  "ts": "2026-08-01T00:16:36.266541+00:00",
   "berths_occupied": 18,
   "berths_total": 56,
   "vessels_nearby": 102,
@@ -9,19 +9,15 @@
   "vessels_moored_other": 63,
   "vessels_buffered": 6,
   "planned_arrivals": 43,
-  "planned_cargoes": 1002,
+  "planned_cargoes": 855,
   "cargo_queue_by_terminal": {
     "general_cargo_bulk": {
-      "count": 613,
-      "weight_t": 10801000.0,
+      "count": 492,
+      "weight_t": 8416000.0,
       "top_cargos": [
         [
           "Salt",
-          491
-        ],
-        [
-          "Rock Salt",
-          42
+          380
         ],
         [
           "Cement",
@@ -30,6 +26,10 @@
         [
           "Calcium Carbonate",
           36
+        ],
+        [
+          "Rock Salt",
+          32
         ],
         [
           "Deicing Salt",
@@ -48,8 +48,8 @@
       ]
     },
     "general_cargo": {
-      "count": 193,
-      "weight_t": 2259329.2,
+      "count": 188,
+      "weight_t": 2196579.2,
       "top_cargos": [
         [
           "Steel Products",
@@ -57,7 +57,7 @@
         ],
         [
           "Hot Rolled Coils",
-          38
+          37
         ],
         [
           "General Cargo",
