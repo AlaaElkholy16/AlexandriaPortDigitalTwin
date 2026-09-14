@@ -1,5 +1,5 @@
 {
-  "ts": "2026-09-14T11:32:50.466719+00:00",
+  "ts": "2026-09-14T13:09:47.775028+00:00",
   "berths_occupied": 16,
   "berths_total": 56,
   "vessels_nearby": 98,
@@ -9,18 +9,22 @@
   "vessels_moored_other": 65,
   "vessels_buffered": 4,
   "planned_arrivals": 46,
-  "planned_cargoes": 940,
+  "planned_cargoes": 1014,
   "cargo_queue_by_terminal": {
     "general_cargo_bulk": {
-      "count": 404,
-      "weight_t": 12123300.0,
+      "count": 441,
+      "weight_t": 13140800.0,
       "top_cargos": [
         [
           "Salt",
-          401
+          436
         ],
         [
           "Fertilizers",
+          2
+        ],
+        [
+          "Road Salt",
           2
         ],
         [
@@ -54,12 +58,12 @@
       ]
     },
     "general_cargo": {
-      "count": 388,
-      "weight_t": 4323321.4,
+      "count": 425,
+      "weight_t": 4521271.4,
       "top_cargos": [
         [
           "Hot Rolled Coils",
-          165
+          202
         ],
         [
           "Steel Products",
@@ -412,9 +416,9 @@
       "lon": 29.8747,
       "sog": 0,
       "heading": 195,
-      "from": "Naples",
-      "to": "Alexandria",
-      "progress": 0.9993133761142969,
+      "from": "Alexandria",
+      "to": "Iskenderun",
+      "progress": 0.0769659956374941,
       "berth": "B51",
       "match_type": "exact",
       "loading_status": "laden",
@@ -934,7 +938,7 @@
       "heading": 285,
       "from": "El Dekheila",
       "to": "Gibraltar",
-      "progress": 0.022603603893219623,
+      "progress": 0.06735569314992358,
       "berth": null,
       "match_type": "",
       "loading_status": "laden",
@@ -1394,7 +1398,7 @@
       "heading": 285,
       "from": "Latakia",
       "to": "Alexandria",
-      "progress": 0.9738366075460366,
+      "progress": 0.9950685542854416,
       "berth": null,
       "match_type": "",
       "loading_status": null,
@@ -1414,7 +1418,7 @@
       "heading": 195,
       "from": "Suez",
       "to": "Alexandria",
-      "progress": 0.04234191632836014,
+      "progress": 0.042328029900107436,
       "berth": null,
       "match_type": "",
       "loading_status": "laden",
@@ -1534,7 +1538,7 @@
       "heading": 270,
       "from": "Port Akdeniz",
       "to": "El Dekheila",
-      "progress": 0.9793755940289471,
+      "progress": 0.9792972694475521,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -1614,7 +1618,7 @@
       "heading": 330,
       "from": "tanjung pengelih",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9994767489659091,
+      "progress": 0.9994844189675277,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -1634,7 +1638,7 @@
       "heading": 105,
       "from": "Port Elizabeth",
       "to": "Sidi Kerir Terminal",
-      "progress": 1.001856612323302,
+      "progress": 1.0018506153640296,
       "berth": null,
       "match_type": "",
       "loading_status": null,
@@ -1654,7 +1658,7 @@
       "heading": 315,
       "from": "Tanjong Pagar",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9996056089316026,
+      "progress": 0.9996110979874946,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -1974,7 +1978,7 @@
       "heading": 360,
       "from": "Abu Qir",
       "to": "Valletta",
-      "progress": 1,
+      "progress": 0.03837218987709052,
       "berth": null,
       "match_type": "",
       "loading_status": "laden",
@@ -2014,7 +2018,7 @@
       "heading": 120,
       "from": "Algeciras",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9977890657910524,
+      "progress": 0.997789680069768,
       "berth": null,
       "match_type": "",
       "loading_status": null,
@@ -2074,7 +2078,7 @@
       "heading": 285,
       "from": "Algeciras",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9971057852538364,
+      "progress": 0.9971079144952726,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -2134,7 +2138,7 @@
       "heading": 45,
       "from": "Algeciras",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9968988712298594,
+      "progress": 0.996939780337856,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -2154,7 +2158,7 @@
       "heading": 345,
       "from": "Ngqura",
       "to": "South Sinai",
-      "progress": 0.9081155598086936,
+      "progress": 0.9081106307199026,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
