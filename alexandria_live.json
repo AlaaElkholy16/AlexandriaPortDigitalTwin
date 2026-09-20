@@ -1,5 +1,5 @@
 {
-  "ts": "2026-09-19T23:41:27.932087+00:00",
+  "ts": "2026-09-20T01:50:00.209825+00:00",
   "berths_occupied": 22,
   "berths_total": 56,
   "vessels_nearby": 107,
@@ -8,16 +8,16 @@
   "vessels_at_anchorage": 7,
   "vessels_moored_other": 68,
   "vessels_buffered": 6,
-  "planned_arrivals": 37,
-  "planned_cargoes": 2071,
+  "planned_arrivals": 38,
+  "planned_cargoes": 2062,
   "cargo_queue_by_terminal": {
     "general_cargo_bulk": {
-      "count": 1614,
-      "weight_t": 37501300.0,
+      "count": 1612,
+      "weight_t": 37415300.0,
       "top_cargos": [
         [
           "Salt",
-          1278
+          1276
         ],
         [
           "Rock Salt",
@@ -62,7 +62,7 @@
       ]
     },
     "general_cargo": {
-      "count": 318,
+      "count": 316,
       "weight_t": 3478517.4,
       "top_cargos": [
         [
@@ -83,7 +83,7 @@
         ],
         [
           "General Cargo",
-          27
+          25
         ]
       ]
     },
@@ -435,7 +435,7 @@
       "heading": 300,
       "from": "Alexandria",
       "to": "Gebze",
-      "progress": 1,
+      "progress": 0.037806228494484215,
       "berth": "B54",
       "match_type": "exact",
       "loading_status": "ballast",
@@ -1315,7 +1315,7 @@
       "heading": 255,
       "from": "Ashdod",
       "to": "El Dekheila",
-      "progress": 0.9912388866699383,
+      "progress": 0.9983263127435756,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -1415,7 +1415,7 @@
       "heading": 30,
       "from": "Shell Derince",
       "to": "El Dekheila",
-      "progress": 0.9931132886514075,
+      "progress": 0.9937229342572198,
       "berth": null,
       "match_type": "",
       "loading_status": "laden",
@@ -1675,7 +1675,7 @@
       "heading": 240,
       "from": "Port Said",
       "to": "Alexandria",
-      "progress": 0.8890474120913034,
+      "progress": 0.9475121080388569,
       "berth": null,
       "match_type": "",
       "loading_status": "laden",
@@ -1795,7 +1795,7 @@
       "heading": 315,
       "from": "tanjung pengelih",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9994326733358195,
+      "progress": 0.9994286860495767,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -1815,7 +1815,7 @@
       "heading": 120,
       "from": "Port Elizabeth",
       "to": "Sidi Kerir Terminal",
-      "progress": 1.0018506395785423,
+      "progress": 1.001855063645761,
       "berth": null,
       "match_type": "",
       "loading_status": null,
@@ -1835,7 +1835,7 @@
       "heading": 90,
       "from": "Tanjong Pagar",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9996065705335931,
+      "progress": 0.999605894137754,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -1955,7 +1955,7 @@
       "heading": 75,
       "from": "Escombreras",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9973115399697368,
+      "progress": 0.9973211201296278,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -2235,7 +2235,7 @@
       "heading": 225,
       "from": "Algeciras",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9977780108714428,
+      "progress": 0.9977844320811899,
       "berth": null,
       "match_type": "",
       "loading_status": null,
@@ -2295,7 +2295,7 @@
       "heading": 60,
       "from": "Vassiliko Power Station",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.9951001367843224,
+      "progress": 0.9952222209889716,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -2315,7 +2315,7 @@
       "heading": 90,
       "from": "Algeciras",
       "to": "Sidi Kerir Terminal",
-      "progress": 0.997132768587639,
+      "progress": 0.9971412509340345,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
@@ -2395,7 +2395,7 @@
       "heading": 45,
       "from": "Ngqura",
       "to": "South Sinai",
-      "progress": 0.9081176497068705,
+      "progress": 0.9081162460364913,
       "berth": null,
       "match_type": "",
       "loading_status": "ballast",
