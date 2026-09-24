@@ -1,5 +1,5 @@
 {
-  "ts": "2026-09-24T10:34:30.212285+00:00",
+  "ts": "2026-09-24T10:58:24.626929+00:00",
   "berths_occupied": 16,
   "berths_total": 56,
   "vessels_nearby": 102,
@@ -9,15 +9,15 @@
   "vessels_moored_other": 67,
   "vessels_buffered": 7,
   "planned_arrivals": 44,
-  "planned_cargoes": 2032,
+  "planned_cargoes": 2034,
   "cargo_queue_by_terminal": {
     "general_cargo_bulk": {
-      "count": 1604,
-      "weight_t": 27119100.0,
+      "count": 1606,
+      "weight_t": 27125300.0,
       "top_cargos": [
         [
           "Salt",
-          1266
+          1268
         ],
         [
           "Rock Salt",
